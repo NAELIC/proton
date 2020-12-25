@@ -7,9 +7,10 @@
 
 class UDPServer {
    public:
-    UDPServer(boost::asio::io_context& io_context,
-              const boost::asio::ip::address& multicast_address);
-    void send();
+    UDPServer(std::string address, unsigned int port,
+              boost::asio::io_context& io_context);
+
+    void send();  // TODO : Send Grsim Packet !
 
    private:
     boost::asio::ip::udp::endpoint endpoint_;

@@ -2,9 +2,9 @@
 
 using namespace boost;
 
-UDPServer::UDPServer(asio::io_context& io_context,
-                     const asio::ip::address& multicast_address)
-    : endpoint_(multicast_address, 10020),
+UDPServer::UDPServer(std::string address, unsigned int port,
+                     asio::io_context& io_context)
+    : endpoint_(asio::ip::make_address(address), port),
       socket_(io_context, endpoint_.protocol()) {
     socket_.set_option(asio::ip::multicast::hops(1));
 }

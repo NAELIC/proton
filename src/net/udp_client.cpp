@@ -2,40 +2,32 @@
 
 using namespace boost;
 
-UDPClient::UDPClient(asio::io_service& io_service,
-                     const asio::ip::address& listen_address,
-                     const asio::ip::address& multicast_address)
-    : socket_(io_service)
-{
-    asio::ip::udp::endpoint listen_endpoint(listen_address,
-                                                   20011);
+UDPClient::UDPClient(std::string listen_addr, std::string multicast_addr,
+                     unsigned int port, asio::io_context& io_context)
+    : socket_(io_context) {
+    // Create the socket so that multiple may be bound to the same address.
+    asio::ip::udp::endpoint listen_endpoint(asio::ip::make_address(listen_addr),
+                                            port);
     socket_.open(listen_endpoint.protocol());
     socket_.set_option(asio::ip::udp::socket::reuse_address(true));
     socket_.bind(listen_endpoint);
 
     // Join the multicast group.
-    socket_.set_option(
-        asio::ip::multicast::join_group(multicast_address));
+    socket_.set_option(asio::ip::multicast::join_group(
+        asio::ip::make_address(multicast_addr)));
 
-    socket_.async_receive_from(
-        boost::asio::buffer(data_, 1024), sender_endpoint_,
-        boost::bind(&UDPClient::handle_receive_from, this,
-                    boost::asio::placeholders::error,
-                    boost::asio::placeholders::bytes_transferred));
+    do_receive();
 }
 
-void UDPClient::handle_receive_from(const boost::system::error_code& error,
-      size_t bytes_recvd)
-  {
-    if (!error)
-    {
-      std::cout.write(data_, bytes_recvd);
-      std::cout << std::endl;
+void UDPClient::do_receive() {
+    socket_.async_receive_from(
+        asio::buffer(data_), sender_endpoint_,
+        [this](system::error_code ec, std::size_t length) {
+            if (!ec) {
+                std::cout.write(data_.data(), length);
+                std::cout << std::endl;
 
-      socket_.async_receive_from(
-          boost::asio::buffer(data_, max_length), sender_endpoint_,
-          boost::bind(&UDPClient::handle_receive_from, this,
-            boost::asio::placeholders::error,
-            boost::asio::placeholders::bytes_transferred));
-    }
-  }
+                do_receive();
+            }
+        });
+}

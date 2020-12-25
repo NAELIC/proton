@@ -69,7 +69,7 @@ SET(
     src/net/udp_server.cpp
     
     # SSL
-    src/ssl/world.cpp
+    # src/ssl/world.cpp
     src/ssl/formation.cpp
 
     # maths
@@ -96,7 +96,7 @@ SET(
     include/net/udp_server.h
 
     # SSL
-    include/ssl/world.h
+    # include/ssl/world.h
     include/ssl/formation.h
 
     # Maths

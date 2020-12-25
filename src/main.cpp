@@ -1,5 +1,6 @@
 #include <unistd.h>
 
+#include <boost/asio.hpp>
 #include <csignal>
 #include <iostream>
 #include <string>
@@ -11,7 +12,6 @@ bool running = true;
 
 void signalHandler(int signum) {
     running = false;
-    exit(1);
 }
 
 void test_server(boost::asio::io_context& io_context) {
@@ -37,13 +37,27 @@ void test_client(boost::asio::io_context& io_context) {
     };
 }
 
+void update(const boost::system::error_code& /*e*/,
+           boost::asio::steady_timer* t) {
+    if (running) {
+
+        std::cout << "Hello" << std::endl;
+
+        t->expires_at(t->expiry() + boost::asio::chrono::milliseconds(60));
+        t->async_wait(
+            boost::bind(update, boost::asio::placeholders::error, t));
+    }
+}
+
 int main(int argc, char const* argv[]) {
     signal(SIGINT, signalHandler);
-    boost::asio::io_context io_context;
+    boost::asio::io_context io;
 
-    // test_server(io_context);
-    // test_client(io_context);
+    boost::asio::steady_timer t(io, boost::asio::chrono::milliseconds(60));
+    t.async_wait(
+        boost::bind(update, boost::asio::placeholders::error, &t));
 
-    std::cout << "Finish !" << std::endl;
+    io.run();
+
     return 0;
 }

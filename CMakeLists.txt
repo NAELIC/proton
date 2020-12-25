@@ -17,6 +17,7 @@ if(CMAKE_SOURCE_DIR STREQUAL namec_core_SOURCE_DIR)
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR/}include/physics)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR/}include/net)
 
 # ODE
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
@@ -37,6 +38,17 @@ protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS
     src/proto/grSim_Packet.proto
 )
 
+# Boost
+
+find_package(Boost 1.56 REQUIRED COMPONENTS system)
+
+if(Boost_FOUND)
+  include_directories(${Boost_INCLUDE_DIRS})
+  link_directories(${Boost_LIBRARY_DIRS})
+endif(Boost_FOUND)
+
+
+
 # Sources & Headers
 SET(
     SRCS
@@ -51,6 +63,10 @@ SET(
     src/physics/pcylinder.cpp
     src/physics/pbox.cpp
     src/physics/pray.cpp
+
+    # network
+    src/net/udp_client.cpp
+    src/net/udp_server.cpp
 )
 
 SET(
@@ -65,8 +81,12 @@ SET(
     include/physics/pcylinder.h
     include/physics/pbox.h
     include/physics/pray.h
+
+    # network
+    include/net/udp_client.h
+    include/net/udp_server.h
 )
 
 # executable
 add_executable(proton ${SRCS} ${HEADERS} ${PROTO_SRCS} ${PROTO_HDRS})
-target_link_libraries(proton ode::ode ${PROTOBUF_LIBRARIES})
+target_link_libraries(proton ode::ode ${PROTOBUF_LIBRARIES} ${Boost_SYSTEM_LIBRARY})

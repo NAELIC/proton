@@ -53,6 +53,7 @@ SET(
     SRCS
     src/main.cpp
     src/config.cpp
+    src/proton.cpp
 
     # physics
     src/physics/pworld.cpp
@@ -69,8 +70,9 @@ SET(
     src/net/udp_server.cpp
     
     # SSL
-    # src/ssl/world.cpp
-    src/ssl/formation.cpp
+    src/ssl/world.cpp
+    src/ssl/robot.cpp
+ #    src/ssl/formation.cpp
 
     # maths
     src/utils/math/point.cpp
@@ -80,6 +82,7 @@ SET(
     HEADERS
     include/config.h
     include/constant.h
+    include/proton.h
 
     # physics
     include/physics/pworld.h
@@ -96,8 +99,10 @@ SET(
     include/net/udp_server.h
 
     # SSL
-    # include/ssl/world.h
-    include/ssl/formation.h
+    include/ssl/world.h
+    include/ssl/robot.h
+
+    # include/ssl/formation.h
 
     # Maths
     include/utils/math/point.h

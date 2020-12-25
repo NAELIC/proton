@@ -18,11 +18,11 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 
 #pragma once
 
+#include "config.h"
 #include "physics/pball.h"
 #include "physics/pbox.h"
 #include "physics/pcylinder.h"
 #include "physics/pworld.h"
-// #include "configwidget.h"
 
 enum KickStatus {
     NO_KICK = 0,
@@ -41,7 +41,6 @@ class Robot {
     bool last_state;
 
    public:
-    ConfigWidget* cfg;
     dSpaceID space;
     PCylinder* chassis;
     PBall* dummy;
@@ -51,7 +50,7 @@ class Robot {
     // these values are not controled by this class
     bool selected;
     dReal select_x, select_y, select_z;
-    QImage *img, *number;
+
     class Wheel {
        public:
         int id;
@@ -88,12 +87,10 @@ class Robot {
         Robot* rob;
     } * kicker;
 
-    Robot(PWorld* world, PBall* ball, ConfigWidget* _cfg, dReal x, dReal y,
-          dReal z, dReal r, dReal g, dReal b, int rob_id, int wheeltexid,
-          int dir);
+    Robot(PWorld* world, PBall* ball, dReal x, dReal y, dReal z, dReal r,
+          dReal g, dReal b, int rob_id, int wheeltexid, int dir);
     ~Robot();
     void step();
-    void drawLabel();
     void setSpeed(int i, dReal s);  // i = 0,1,2,3
     void setSpeed(dReal vx, dReal vy, dReal vw);
     dReal getSpeed(int i);
@@ -110,6 +107,8 @@ class Robot {
     PWorld* getWorld();
 };
 
-#define ROBOT_START_Z(cfg)                  \
-    (cfg->robotSettings.RobotHeight * 0.5 + \
-     cfg->robotSettings.WheelRadius * 1.1 + cfg->robotSettings.BottomHeight)
+// TODO : ROBOT_START_Z
+#define ROBOT_START_Z()                           \
+    (getConf().robot_setting.height * 0.5 +       \
+     getConf().robot_setting.wheel_radius * 1.1 + \
+     getConf().robot_setting.bottom_height)

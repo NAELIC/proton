@@ -66,11 +66,42 @@ struct Game {
 
 // TODO : Add Division A or B !
 
+struct RobotSetting {
+    // geometry
+    double center_from_kicker{0.064997};
+    double radius{0.09};
+    double height{0.15};
+    double bottom_height{0.02};
+    double kicker_z{0.005};
+    double kicker_thickness{0.005};
+    double kicker_width{0.08};
+    double kicker_height{0.04};
+    double wheel_radius{0.0285};
+    double wheel_thickness{0.005};
+    double wheel_angle_1{60};
+    double wheel_angle_2{135};
+    double wheel_angle_3{225};
+    double wheel_angle_4{300};
+
+    // physics
+    double body_mass{2.75};
+    double wheel_mass{0.06};
+    double kicker_mass{0.03125};
+    double kicker_damp_factor{0.2};
+    double roller_torque_factor{0.06};
+    double roller_perpendicular_torque_factor{0.005};
+    double kicker_friction{0.8};
+    double wheel_tangent_friction{0.8};
+    double wheel_perpendicular_friction{0.05};
+    double wheel_motor_fMax{0.2};
+};
+
 class Config {
    public:
     Field field;
     Ball ball;
     Game game;
+    RobotSetting robot_setting;
 };
 
 extern Config& getConf();

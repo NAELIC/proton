@@ -39,7 +39,7 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 #include "messages_robocup_ssl_robot_status.pb.h"
 #include "messages_robocup_ssl_wrapper.pb.h"
 
-#define WALL_COUNT 10
+#include "constant.h"
 
 class RobotsFomation;
 class SendingPacket {
@@ -49,22 +49,20 @@ class SendingPacket {
     int t;
 };
 
-class SSLWorld {
+class World {
    private:
     int framenum;
     dReal last_dt;
     QList<SendingPacket*> sendQueue;
     char packet[200];
     char* in_buffer;
-    bool lastInfraredState[TEAM_COUNT][MAX_ROBOT_COUNT];
-    KickStatus lastKickState[TEAM_COUNT][MAX_ROBOT_COUNT];
+    bool lastInfraredState[NB_TEAM][MAX_ROBOT];
+    KickStatus lastKickState[NB_TEAM][MAX_ROBOT];
 
    public:
     dReal customDT;
-    bool isGLEnabled;
-    SSLWorld(RobotsFomation* form1, RobotsFomation* form2);
-    virtual ~SSLWorld();
-    void glinit();
+    World(RobotsFomation* form1, RobotsFomation* form2);
+    virtual ~World();
     void step(dReal dt = -1);
     SSL_WrapperPacket* generatePacket(int cam_id = 0);
     void addFieldLinesArcs(SSL_GeometryFieldSize* field);
@@ -83,14 +81,12 @@ class SSLWorld {
     void sendRobotStatus(Robots_Status& robotsPacket, QHostAddress sender,
                          int team);
 
-    CGraphics* g;
     PWorld* p;
     PBall* ball;
     PGround* ground;
     PRay* ray;
     PFixedBox* walls[WALL_COUNT];
     int selected;
-    bool show3DCursor;
     dReal cursor_x, cursor_y, cursor_z;
     dReal cursor_radius;
     RoboCupSSLServer* visionServer;
@@ -108,15 +104,10 @@ class SSLWorld {
 
 class RobotsFomation {
    public:
-    dReal x[MAX_ROBOT_COUNT];
-    dReal y[MAX_ROBOT_COUNT];
-    RobotsFomation(int type, ConfigWidget* _cfg);
+    dReal x[MAX_ROBOT];
+    dReal y[MAX_ROBOT];
+    RobotsFomation(int type);
     void setAll(dReal* xx, dReal* yy);
-    void loadFromFile(const QString& filename);
-    void resetRobots(Robot** r, int team);
-
-   private:
-    ConfigWidget* cfg;
 };
 
 dReal fric(dReal f);

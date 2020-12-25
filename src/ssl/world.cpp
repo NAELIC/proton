@@ -23,7 +23,7 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 #define ROBOT_GRAY 0.4
 #define WHEEL_COUNT 4
 
-SSLWorld* _w;
+World* _w;
 dReal randn_notrig(dReal mu = 0.0, dReal sigma = 1.0);
 dReal randn_trig(dReal mu = 0.0, dReal sigma = 1.0);
 dReal rand0_1();
@@ -112,14 +112,11 @@ bool ballCallBack(dGeomID o1, dGeomID o2, PSurface* s, int /*robots_count*/) {
     return true;
 }
 
-SSLWorld::SSLWorld(RobotsFomation* form1, RobotsFomation* form2) {
-    isGLEnabled = true;
-    customDT = -1;
-    _w = this;
-    show3DCursor = false;
-    updatedCursor = false;
-    framenum = 0;
-    last_dt = -1;
+World::World(RobotsFomation* form1, RobotsFomation* form2) {
+    // customDT = -1;
+    // _w = this;
+    // framenum = 0;
+    // last_dt = -1;
     // TODO : Rename to p
     p = new PWorld(0.05, 9.81, getConf().game.robot_count);
     ball = new PBall(0, 0, 0.5, getConf().ball.radius, getConf().ball.mass, 1,
@@ -187,7 +184,8 @@ SSLWorld::SSLWorld(RobotsFomation* form1, RobotsFomation* form2) {
     p->addObject(ball);
     p->addObject(ray);
     for (auto& wall : walls) p->addObject(wall);
-    const int wheeltexid = 4 * getConf().game.robot_count + 12 + 1;  // 37 for 6 robots
+    const int wheeltexid =
+        4 * getConf().game.robot_count + 12 + 1;  // 37 for 6 robots
 
     // TODO : Understand it
     cfg->robotSettings = cfg->blueSettings;
@@ -263,8 +261,6 @@ SSLWorld::SSLWorld(RobotsFomation* form1, RobotsFomation* form2) {
         }
     }
     sendGeomCount = 0;
-    timer = new QTime();
-    timer->start();
     in_buffer = new char[65536];
 
     // initialize robot state
@@ -276,100 +272,19 @@ SSLWorld::SSLWorld(RobotsFomation* form1, RobotsFomation* form2) {
     }
 }
 
-int SSLWorld::robotIndex(int robot, int team) {
+int World::robotIndex(int robot, int team) {
     if (robot >= cfg->Robots_Count()) return -1;
     return robot + team * cfg->Robots_Count();
 }
 
-SSLWorld::~SSLWorld() {
+World::~World() {
     delete g;
     delete p;
 }
 
-QImage* createBlob(char yb, int i, QImage** res) {
-    *res = new QImage(QString(":/%1%2").arg(yb).arg(i) + QString(".png"));
-    return *res;
-}
-
-QImage* createNumber(int i, int r, int g, int b, int a) {
-    QImage* img = new QImage(32, 32, QImage::Format_ARGB32);
-    QPainter* p = new QPainter();
-    QBrush br;
-    p->begin(img);
-    QColor black(0, 0, 0, 0);
-    for (int x = 0; x < img->width(); x++) {
-        for (int j = 0; j < img->height(); j++) {
-            img->setPixel(x, j, black.rgba());
-        }
-    }
-    QColor txtcolor(r, g, b, a);
-    QPen pen;
-    pen.setStyle(Qt::SolidLine);
-    pen.setWidth(3);
-    pen.setBrush(txtcolor);
-    pen.setCapStyle(Qt::RoundCap);
-    pen.setJoinStyle(Qt::RoundJoin);
-    p->setPen(pen);
-    QFont f;
-    f.setBold(true);
-    f.setPointSize(26);
-    p->setFont(f);
-    p->drawText(img->width() / 2 - 15, img->height() / 2 - 15, 30, 30,
-                Qt::AlignCenter, QString("%1").arg(i));
-    p->end();
-    delete p;
-    return img;
-}
-
-void SSLWorld::glinit() {
-    g->loadTexture(new QImage(":/grass.png"));
-
-    // Loading Robot textures for each robot
-    for (int i = 0; i < cfg->Robots_Count(); i++)
-        g->loadTexture(createBlob('b', i, &robots[i]->img));
-
-    for (int i = 0; i < cfg->Robots_Count(); i++)
-        g->loadTexture(
-            createBlob('y', i, &robots[cfg->Robots_Count() + i]->img));
-
-    // Creating number textures
-    for (int i = 0; i < cfg->Robots_Count(); i++)
-        g->loadTexture(createNumber(i, 15, 193, 225, 255));
-
-    for (int i = 0; i < cfg->Robots_Count(); i++)
-        g->loadTexture(createNumber(i, 0xff, 0xff, 0, 255));
-
-    // Loading sky textures
-    // XXX: for some reason they are loaded twice otherwise the wheel texture is
-    // wrong
-    for (int i = 0; i < 6; i++) {
-        g->loadTexture(
-            new QImage(QString(":/sky/neg_%1")
-                           .arg(i % 3 == 0 ? 'x' : i % 3 == 1 ? 'y' : 'z') +
-                       QString(".png")));
-        g->loadTexture(
-            new QImage(QString(":/sky/pos_%1")
-                           .arg(i % 3 == 0 ? 'x' : i % 3 == 1 ? 'y' : 'z') +
-                       QString(".png")));
-    }
-
-    // The wheel texture
-    g->loadTexture(new QImage(":/wheel.png"));
-
-    // Init at last
-    p->glinit();
-}
-
-void SSLWorld::step(dReal dt) {
-    if (!isGLEnabled)
-        g->disableGraphics();
-    else
-        g->enableGraphics();
-
+void World::step(dReal dt) {
     if (customDT > 0) dt = customDT;
-    const auto ratio = m_parent->devicePixelRatio();
-    g->initScene(m_parent->width() * ratio, m_parent->height() * ratio, 0, 0.7,
-                 1);
+
     int ballCollisionTry = 5;
     for (int kk = 0; kk < ballCollisionTry; kk++) {
         const dReal* ballvel = dBodyGetLinearVel(ball->body);
@@ -405,14 +320,12 @@ void SSLWorld::step(dReal dt) {
         best_k = -2;
         dReal bx, by, bz;
         ball->getBodyPosition(bx, by, bz);
-        g->getViewpoint(xyz, hpr);
         best_dist = (bx - xyz[0]) * (bx - xyz[0]) +
                     (by - xyz[1]) * (by - xyz[1]) +
                     (bz - xyz[2]) * (bz - xyz[2]);
     }
-    for (int k = 0; k < cfg->Robots_Count() * 2; k++) {
+    for (int k = 0; k < getConf().game.robot_count * 2; k++) {
         if (robots[k]->selected) {
-            g->getViewpoint(xyz, hpr);
             dReal dist =
                 (robots[k]->select_x - xyz[0]) *
                     (robots[k]->select_x - xyz[0]) +
@@ -431,38 +344,18 @@ void SSLWorld::step(dReal dt) {
                                           ROBOT_GRAY * 1.5);
     selected = best_k;
     ball->tag = -1;
-    for (int k = 0; k < cfg->Robots_Count() * 2; k++) {
+    for (int k = 0; k < getConf().game.robot_count * 2; k++) {
         robots[k]->step();
         robots[k]->selected = false;
     }
-    p->draw();
-    g->drawSkybox(4 * cfg->Robots_Count() + 6 + 1,   // 31 for 6 robot
-                  4 * cfg->Robots_Count() + 6 + 2,   // 32 for 6 robot
-                  4 * cfg->Robots_Count() + 6 + 3,   // 33 for 6 robot
-                  4 * cfg->Robots_Count() + 6 + 4,   // 34 for 6 robot
-                  4 * cfg->Robots_Count() + 6 + 5,   // 31 for 6 robot
-                  4 * cfg->Robots_Count() + 6 + 6);  // 36 for 6 robot
-
     dMatrix3 R;
-
-    if (g->isGraphicsEnabled())
-        if (show3DCursor) {
-            dRFromAxisAndAngle(R, 0, 0, 1, 0);
-            g->setColor(1, 0.9, 0.2, 0.5);
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            g->drawCircle(cursor_x, cursor_y, 0.001, cursor_radius);
-            glDisable(GL_BLEND);
-        }
-
-    g->finalizeScene();
 
     sendVisionBuffer();
     framenum++;
 }
 
-void SSLWorld::addRobotStatus(Robots_Status& robotsPacket, int robotID,
-                              int team, bool infrared, KickStatus kickStatus) {
+void World::addRobotStatus(Robots_Status& robotsPacket, int robotID, int team,
+                           bool infrared, KickStatus kickStatus) {
     Robot_Status* robot_status = robotsPacket.add_robots_status();
     robot_status->set_robot_id(robotID);
 
@@ -491,8 +384,8 @@ void SSLWorld::addRobotStatus(Robots_Status& robotsPacket, int robotID,
     }
 }
 
-void SSLWorld::sendRobotStatus(Robots_Status& robotsPacket, QHostAddress sender,
-                               int team) {
+void World::sendRobotStatus(Robots_Status& robotsPacket, QHostAddress sender,
+                            int team) {
     int size = robotsPacket.ByteSize();
     QByteArray buffer(size, 0);
     robotsPacket.SerializeToArray(buffer.data(), buffer.size());
@@ -505,7 +398,7 @@ void SSLWorld::sendRobotStatus(Robots_Status& robotsPacket, QHostAddress sender,
     }
 }
 
-void SSLWorld::recvActions() {
+void World::recvActions() {
     QHostAddress sender;
     quint16 port;
     grSim_Packet packet;
@@ -675,7 +568,7 @@ dReal normalizeAngle(dReal a) {
     return a;
 }
 
-bool SSLWorld::visibleInCam(int id, double x, double y) {
+bool World::visibleInCam(int id, double x, double y) {
     id %= 4;
     if (id == 0) {
         if (x > -0.2 && y > -0.2) return true;
@@ -693,7 +586,7 @@ bool SSLWorld::visibleInCam(int id, double x, double y) {
 }
 
 #define CONVUNIT(x) ((int)(1000 * (x)))
-SSL_WrapperPacket* SSLWorld::generatePacket(int cam_id) {
+SSL_WrapperPacket* World::generatePacket(int cam_id) {
     SSL_WrapperPacket* packet = new SSL_WrapperPacket;
     dReal x, y, z, dir, k;
     ball->getBodyPosition(x, y, z);
@@ -803,7 +696,7 @@ SSL_WrapperPacket* SSLWorld::generatePacket(int cam_id) {
     return packet;
 }
 
-void SSLWorld::addFieldLinesArcs(SSL_GeometryFieldSize* field) {
+void World::addFieldLinesArcs(SSL_GeometryFieldSize* field) {
     const double kFieldLength = CONVUNIT(cfg->Field_Length());
     const double kFieldWidth = CONVUNIT(cfg->Field_Width());
     const double kGoalWidth = CONVUNIT(cfg->Goal_Width());
@@ -876,16 +769,16 @@ void SSLWorld::addFieldLinesArcs(SSL_GeometryFieldSize* field) {
                 0, 2 * M_PI, kLineThickness);
 }
 
-Vector2f* SSLWorld::allocVector(float x, float y) {
+Vector2f* World::allocVector(float x, float y) {
     Vector2f* vec = new Vector2f();
     vec->set_x(x);
     vec->set_y(y);
     return vec;
 }
 
-void SSLWorld::addFieldLine(SSL_GeometryFieldSize* field,
-                            const std::string& name, float p1_x, float p1_y,
-                            float p2_x, float p2_y, float thickness) {
+void World::addFieldLine(SSL_GeometryFieldSize* field, const std::string& name,
+                         float p1_x, float p1_y, float p2_x, float p2_y,
+                         float thickness) {
     SSL_FieldLineSegment* line = field->add_field_lines();
     line->set_name(name.c_str());
     line->mutable_p1()->set_x(p1_x);
@@ -895,9 +788,9 @@ void SSLWorld::addFieldLine(SSL_GeometryFieldSize* field,
     line->set_thickness(thickness);
 }
 
-void SSLWorld::addFieldArc(SSL_GeometryFieldSize* field,
-                           const std::string& name, float c_x, float c_y,
-                           float radius, float a1, float a2, float thickness) {
+void World::addFieldArc(SSL_GeometryFieldSize* field, const std::string& name,
+                        float c_x, float c_y, float radius, float a1, float a2,
+                        float thickness) {
     SSL_FieldCicularArc* arc = field->add_field_arcs();
     arc->set_name(name.c_str());
     arc->mutable_center()->set_x(c_x);
@@ -913,7 +806,7 @@ SendingPacket::SendingPacket(SSL_WrapperPacket* _packet, int _t) {
     t = _t;
 }
 
-void SSLWorld::sendVisionBuffer() {
+void World::sendVisionBuffer() {
     int t = timer->elapsed();
     sendQueue.push_back(new SendingPacket(generatePacket(0), t));
     sendQueue.push_back(new SendingPacket(generatePacket(1), t + 1));
@@ -930,100 +823,70 @@ void SSLWorld::sendVisionBuffer() {
 }
 
 void RobotsFomation::setAll(dReal* xx, dReal* yy) {
-    for (int i = 0; i < MAX_ROBOT_COUNT; i++) {
+    for (int i = 0; i < MAX_ROBOT; i++) {
         x[i] = xx[i];
         y[i] = yy[i];
     }
 }
 
-RobotsFomation::RobotsFomation(int type, ConfigWidget* _cfg) : cfg(_cfg) {
+RobotsFomation::RobotsFomation(int type) {
     if (type == 0) {
-        dReal teamPosX[MAX_ROBOT_COUNT] = {2.20, 1.00, 1.00, 1.00, 0.33, 1.22,
-                                           3.00, 3.20, 3.40, 3.60, 3.80, 4.00,
-                                           0.40, 0.80, 1.20, 1.60};
-        dReal teamPosY[MAX_ROBOT_COUNT] = {
-            0.00, -0.75, 0.00, 0.75, 0.25,  0.00,  1.00,  1.00,
-            1.00, 1.00,  1.00, 1.00, -3.50, -3.50, -3.50, -3.50};
+        dReal teamPosX[MAX_ROBOT] = {2.20, 1.00, 1.00, 1.00, 0.33, 1.22,
+                                     3.00, 3.20, 3.40, 3.60, 3.80, 4.00,
+                                     0.40, 0.80, 1.20, 1.60};
+        dReal teamPosY[MAX_ROBOT] = {0.00,  -0.75, 0.00,  0.75, 0.25, 0.00,
+                                     1.00,  1.00,  1.00,  1.00, 1.00, 1.00,
+                                     -3.50, -3.50, -3.50, -3.50};
         setAll(teamPosX, teamPosY);
     }
     if (type == 1)  // formation 1
     {
-        dReal teamPosX[MAX_ROBOT_COUNT] = {1.50, 1.50, 1.50, 0.55, 2.50, 3.60,
-                                           3.20, 3.20, 3.20, 3.20, 3.20, 3.20,
-                                           0.40, 0.80, 1.20, 1.60};
-        dReal teamPosY[MAX_ROBOT_COUNT] = {
-            1.12, 0.0,   -1.12, 0.00,  0.00,  0.00,  0.75,  -0.75,
-            1.50, -1.50, 2.25,  -2.25, -3.50, -3.50, -3.50, -3.50};
+        dReal teamPosX[MAX_ROBOT] = {1.50, 1.50, 1.50, 0.55, 2.50, 3.60,
+                                     3.20, 3.20, 3.20, 3.20, 3.20, 3.20,
+                                     0.40, 0.80, 1.20, 1.60};
+        dReal teamPosY[MAX_ROBOT] = {1.12,  0.0,   -1.12, 0.00,  0.00, 0.00,
+                                     0.75,  -0.75, 1.50,  -1.50, 2.25, -2.25,
+                                     -3.50, -3.50, -3.50, -3.50};
         setAll(teamPosX, teamPosY);
     }
     if (type == 2)  // formation 2
     {
-        dReal teamPosX[MAX_ROBOT_COUNT] = {4.20, 3.40, 3.40, 0.70, 0.70, 0.70,
-                                           2.00, 2.00, 2.00, 2.00, 2.00, 2.00,
-                                           0.40, 0.80, 1.20, 1.60};
-        dReal teamPosY[MAX_ROBOT_COUNT] = {
-            0.00, -0.20, 0.20, 0.00,  2.25,  -2.25, 0.75,  -0.75,
-            1.50, -1.50, 2.25, -2.25, -3.50, -3.50, -3.50, -3.50};
+        dReal teamPosX[MAX_ROBOT] = {4.20, 3.40, 3.40, 0.70, 0.70, 0.70,
+                                     2.00, 2.00, 2.00, 2.00, 2.00, 2.00,
+                                     0.40, 0.80, 1.20, 1.60};
+        dReal teamPosY[MAX_ROBOT] = {0.00,  -0.20, 0.20,  0.00,  2.25, -2.25,
+                                     0.75,  -0.75, 1.50,  -1.50, 2.25, -2.25,
+                                     -3.50, -3.50, -3.50, -3.50};
         setAll(teamPosX, teamPosY);
     }
     if (type == 3)  // outside field
     {
-        dReal teamPosX[MAX_ROBOT_COUNT] = {0.40, 0.80, 1.20, 1.60, 2.00, 2.40,
-                                           2.80, 3.20, 3.60, 4.00, 4.40, 4.80,
-                                           0.40, 0.80, 1.20, 1.60};
-        dReal teamPosY[MAX_ROBOT_COUNT] = {
-            -4.00, -4.00, -4.00, -4.00, -4.00, -4.00, -4.00, -4.00,
-            -4.00, -4.00, -4.00, -4.00, -4.40, -4.40, -4.40, -4.40};
+        dReal teamPosX[MAX_ROBOT] = {0.40, 0.80, 1.20, 1.60, 2.00, 2.40,
+                                     2.80, 3.20, 3.60, 4.00, 4.40, 4.80,
+                                     0.40, 0.80, 1.20, 1.60};
+        dReal teamPosY[MAX_ROBOT] = {-4.00, -4.00, -4.00, -4.00, -4.00, -4.00,
+                                     -4.00, -4.00, -4.00, -4.00, -4.00, -4.00,
+                                     -4.40, -4.40, -4.40, -4.40};
         setAll(teamPosX, teamPosY);
     }
     if (type == 4) {
-        dReal teamPosX[MAX_ROBOT_COUNT] = {2.80, 2.50, 2.50, 0.80, 0.80, 1.10,
-                                           3.00, 3.20, 3.40, 3.60, 3.80, 4.00,
-                                           0.40, 0.80, 1.20, 1.60};
-        dReal teamPosY[MAX_ROBOT_COUNT] = {
-            5.00, 4.70, 5.30, 5.00, 6.50,  5.50,  1.00,  1.00,
-            1.00, 1.00, 1.00, 1.00, -3.50, -3.50, -3.50, -3.50};
+        dReal teamPosX[MAX_ROBOT] = {2.80, 2.50, 2.50, 0.80, 0.80, 1.10,
+                                     3.00, 3.20, 3.40, 3.60, 3.80, 4.00,
+                                     0.40, 0.80, 1.20, 1.60};
+        dReal teamPosY[MAX_ROBOT] = {5.00,  4.70,  5.30,  5.00, 6.50, 5.50,
+                                     1.00,  1.00,  1.00,  1.00, 1.00, 1.00,
+                                     -3.50, -3.50, -3.50, -3.50};
         setAll(teamPosX, teamPosY);
     }
     if (type == -1)  // outside
     {
-        dReal teamPosX[MAX_ROBOT_COUNT] = {0.40, 0.80, 1.20, 1.60, 2.00, 2.40,
-                                           2.80, 3.20, 3.60, 4.00, 4.40, 4.80,
-                                           0.40, 0.80, 1.20, 1.60};
-        dReal teamPosY[MAX_ROBOT_COUNT] = {
-            -3.40, -3.40, -3.40, -3.40, -3.40, -3.40, -3.40, -3.40,
-            -3.40, -3.40, -3.40, -3.40, -3.20, -3.20, -3.20, -3.20};
+        dReal teamPosX[MAX_ROBOT] = {0.40, 0.80, 1.20, 1.60, 2.00, 2.40,
+                                     2.80, 3.20, 3.60, 4.00, 4.40, 4.80,
+                                     0.40, 0.80, 1.20, 1.60};
+        dReal teamPosY[MAX_ROBOT] = {-3.40, -3.40, -3.40, -3.40, -3.40, -3.40,
+                                     -3.40, -3.40, -3.40, -3.40, -3.40, -3.40,
+                                     -3.20, -3.20, -3.20, -3.20};
         setAll(teamPosX, teamPosY);
-    }
-}
-
-void RobotsFomation::loadFromFile(const QString& filename) {
-    QFile file(filename);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return;
-    QTextStream in(&file);
-    int k;
-    for (k = 0; k < cfg->Robots_Count(); k++) x[k] = y[k] = 0;
-    k = 0;
-    while (!in.atEnd()) {
-        QString line = in.readLine();
-        QStringList list = line.split(",");
-        if (list.count() >= 2) {
-            x[k] = list[0].toFloat();
-            y[k] = list[1].toFloat();
-        } else if (list.count() == 1) {
-            x[k] = list[0].toFloat();
-        }
-        if (k == cfg->Robots_Count() - 1) break;
-        k++;
-    }
-}
-
-void RobotsFomation::resetRobots(Robot** r, int team) {
-    dReal dir = -1;
-    if (team == 1) dir = 1;
-    for (int k = 0; k < cfg->Robots_Count(); k++) {
-        r[k + team * cfg->Robots_Count()]->setXY(x[k] * dir, y[k]);
-        r[k + team * cfg->Robots_Count()]->resetRobot();
     }
 }
 

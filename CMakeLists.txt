@@ -68,7 +68,11 @@ SET(
     src/net/udp_server.cpp
     
     # SSL
-    src/ssl_world.cpp
+    src/ssl/world.cpp
+    src/ssl/formation.cpp
+
+    # maths
+    src/utils/math/point.cpp
 )
 
 SET(
@@ -90,7 +94,11 @@ SET(
 
     # SSL
     include/config.h
-    include/ssl_world.h
+    include/ssl/world.h
+    include/ssl/formation.h
+
+    # Maths
+    include/utils/math/point.h
 )
 
 # executable

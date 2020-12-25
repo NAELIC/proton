@@ -16,8 +16,7 @@ if(CMAKE_SOURCE_DIR STREQUAL namec_core_SOURCE_DIR)
     setDefaultBuildType("Debug")
 endif()
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR/}include/physics)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR/}include/net)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR/}include)
 
 # ODE
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
@@ -67,6 +66,9 @@ SET(
     # network
     src/net/udp_client.cpp
     src/net/udp_server.cpp
+    
+    # SSL
+    src/ssl_world.cpp
 )
 
 SET(
@@ -85,6 +87,10 @@ SET(
     # network
     include/net/udp_client.h
     include/net/udp_server.h
+
+    # SSL
+    include/config.h
+    include/ssl_world.h
 )
 
 # executable

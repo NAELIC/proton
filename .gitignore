@@ -1,6 +1,6 @@
 # Building
-
-build/*
+build/
+old/
 
 # Code editor
 .vscode/

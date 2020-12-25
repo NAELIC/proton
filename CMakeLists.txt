@@ -52,6 +52,7 @@ endif(Boost_FOUND)
 SET(
     SRCS
     src/main.cpp
+    src/config.cpp
 
     # physics
     src/physics/pworld.cpp
@@ -77,6 +78,8 @@ SET(
 
 SET(
     HEADERS
+    include/config.h
+    include/constant.h
 
     # physics
     include/physics/pworld.h
@@ -93,7 +96,6 @@ SET(
     include/net/udp_server.h
 
     # SSL
-    include/config.h
     include/ssl/world.h
     include/ssl/formation.h
 

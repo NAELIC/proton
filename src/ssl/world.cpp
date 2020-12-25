@@ -816,17 +816,17 @@ void World::sendVisionBuffer() {
                 .time_since_epoch()
                 .count();
 
-    sendQueue.push_back(new SendingPacket(generatePacket(0), t));
-    sendQueue.push_back(new SendingPacket(generatePacket(1), t + 1));
-    sendQueue.push_back(new SendingPacket(generatePacket(2), t + 2));
-    sendQueue.push_back(new SendingPacket(generatePacket(3), t + 3));
+    sendQueue.push(new SendingPacket(generatePacket(0), t));
+    sendQueue.push(new SendingPacket(generatePacket(1), t + 1));
+    sendQueue.push(new SendingPacket(generatePacket(2), t + 2));
+    sendQueue.push(new SendingPacket(generatePacket(3), t + 3));
     while (t - sendQueue.front()->t >= getConf().com.send_delay) {
         SSL_WrapperPacket* packet = sendQueue.front()->packet;
         delete sendQueue.front();
-        sendQueue.pop_front();
+        sendQueue.pop();
         visionServer->send(*packet);
         delete packet;
-        if (sendQueue.isEmpty()) break;
+        if (sendQueue.empty()) break;
     }
 }
 

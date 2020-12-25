@@ -27,8 +27,9 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 // #include "net/robocup_ssl_server.h"
 
 #include "robot.h"
-// #include "configwidget.h"
+
 #include <string>
+#include <queue>
 
 #include "config.h"
 #include "constant.h"
@@ -53,7 +54,7 @@ class World {
    private:
     int framenum;
     dReal last_dt;
-    QList<SendingPacket*> sendQueue;
+    std::queue<SendingPacket*> sendQueue;
     char packet[200];
     char* in_buffer;
     bool lastInfraredState[NB_TEAM][MAX_ROBOT];

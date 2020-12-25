@@ -51,8 +51,8 @@ bool wheelCallBack(dGeomID o1, dGeomID o2, PSurface* s, int /*robots_count*/) {
 
     s->surface.mode =
         dContactFDir1 | dContactMu2 | dContactApprox1 | dContactSoftCFM;
-    s->surface.mu = fric(_w->cfg->robotSettings.WheelPerpendicularFriction);
-    s->surface.mu2 = fric(_w->cfg->robotSettings.WheelTangentFriction);
+    s->surface.mu = fric(getConf().robot_setting.wheel_perpendicular_friction);
+    s->surface.mu2 = fric(getConf().robot_setting.wheel_tangent_friction);
     s->surface.soft_cfm = 0.002;
 
     dVector3 v = {0, 0, 1, 1};
@@ -105,7 +105,7 @@ bool ballCallBack(dGeomID o1, dGeomID o2, PSurface* s, int /*robots_count*/) {
         s->fdir1[3] = 0;
         s->usefdir1 = true;
         s->surface.mode = dContactMu2 | dContactFDir1 | dContactSoftCFM;
-        s->surface.mu = _w->cfg->BallFriction();
+        s->surface.mu = getConf().ball.friction;
         s->surface.mu2 = 0.5;
         s->surface.soft_cfm = 0.002;
     }
@@ -187,22 +187,22 @@ World::World(RobotsFomation* form1, RobotsFomation* form2) {
     const int wheeltexid =
         4 * getConf().game.robot_count + 12 + 1;  // 37 for 6 robots
 
-    // TODO : Understand it
-    cfg->robotSettings = cfg->blueSettings;
-    for (int k = 0; k < cfg->Robots_Count(); k++) {
+    // TODO : Pass settings to robot instead of read inside
+    // cfg->robotSettings = cfg->blueSettings;
+    for (int k = 0; k < getConf().game.robot_count; k++) {
         float a1 = -form1->x[k];
         float a2 = form1->y[k];
-        float a3 = ROBOT_START_Z(cfg);
-        robots[k] = new Robot(p, ball, cfg, -form1->x[k], form1->y[k],
-                              ROBOT_START_Z(cfg), ROBOT_GRAY, ROBOT_GRAY,
-                              ROBOT_GRAY, k + 1, wheeltexid, 1);
+        float a3 = ROBOT_START_Z();
+        robots[k] =
+            new Robot(p, ball, -form1->x[k], form1->y[k], ROBOT_START_Z(),
+                      ROBOT_GRAY, ROBOT_GRAY, ROBOT_GRAY, k + 1, wheeltexid, 1);
     }
-    cfg->robotSettings = cfg->yellowSettings;
-    for (int k = 0; k < cfg->Robots_Count(); k++)
-        robots[k + cfg->Robots_Count()] =
-            new Robot(p, ball, cfg, form2->x[k], form2->y[k],
-                      ROBOT_START_Z(cfg), ROBOT_GRAY, ROBOT_GRAY, ROBOT_GRAY,
-                      k + cfg->Robots_Count() + 1, wheeltexid, -1);  // XXX
+    // cfg->robotSettings = cfg->yellowSettings;
+    for (int k = 0; k < getConf().game.robot_count; k++)
+        robots[k + getConf().game.robot_count] = new Robot(
+            p, ball, form2->x[k], form2->y[k], ROBOT_START_Z(), ROBOT_GRAY,
+            ROBOT_GRAY, ROBOT_GRAY, k + getConf().game.robot_count + 1,
+            wheeltexid, -1);  // XXX
 
     p->initAllObjects();
 
@@ -210,7 +210,7 @@ World::World(RobotsFomation* form1, RobotsFomation* form2) {
 
     p->createSurface(ray, ground)->callback = rayCallback;
     p->createSurface(ray, ball)->callback = rayCallback;
-    for (int k = 0; k < cfg->Robots_Count() * 2; k++) {
+    for (int k = 0; k < getConf().game.robot_count * 2; k++) {
         p->createSurface(ray, robots[k]->chassis)->callback = rayCallback;
         p->createSurface(ray, robots[k]->dummy)->callback = rayCallback;
     }
@@ -218,8 +218,8 @@ World::World(RobotsFomation* form1, RobotsFomation* form2) {
     ballwithwall.surface.mode =
         dContactBounce | dContactApprox1;  // | dContactSlip1;
     ballwithwall.surface.mu = 1;           // fric(cfg->ballfriction());
-    ballwithwall.surface.bounce = cfg->BallBounce();
-    ballwithwall.surface.bounce_vel = cfg->BallBounceVel();
+    ballwithwall.surface.bounce = getConf().ball.bounce_factor;
+    ballwithwall.surface.bounce_vel = getConf().ball.bounce_velocity;
     ballwithwall.surface.slip1 = 0;  // cfg->ballslip();
 
     PSurface wheelswithground;
@@ -229,13 +229,13 @@ World::World(RobotsFomation* form1, RobotsFomation* form2) {
 
     PSurface ballwithkicker;
     ballwithkicker.surface.mode = dContactApprox1;
-    ballwithkicker.surface.mu = fric(cfg->robotSettings.Kicker_Friction);
+    ballwithkicker.surface.mu = fric(getConf().robot_setting.kicker_friction);
     ballwithkicker.surface.slip1 = 5;
 
     for (auto& wall : walls)
         p->createSurface(ball, wall)->surface = ballwithwall.surface;
 
-    for (int k = 0; k < 2 * cfg->Robots_Count(); k++) {
+    for (int k = 0; k < 2 * getConf().game.robot_count; k++) {
         p->createSurface(robots[k]->chassis, ground);
         for (auto& wall : walls) p->createSurface(robots[k]->chassis, wall);
         p->createSurface(robots[k]->dummy, ball);
@@ -249,7 +249,7 @@ World::World(RobotsFomation* form1, RobotsFomation* form2) {
             w_g->usefdir1 = true;
             w_g->callback = wheelCallBack;
         }
-        for (int j = k + 1; j < 2 * cfg->Robots_Count(); j++) {
+        for (int j = k + 1; j < 2 * getConf().game.robot_count; j++) {
             if (k != j) {
                 p->createSurface(
                     robots[k]->dummy,
@@ -265,7 +265,7 @@ World::World(RobotsFomation* form1, RobotsFomation* form2) {
 
     // initialize robot state
     for (int team = 0; team < 2; ++team) {
-        for (int i = 0; i < MAX_ROBOT_COUNT; ++i) {
+        for (int i = 0; i < MAX_ROBOT; ++i) {
             lastInfraredState[team][i] = false;
             lastKickState[team][i] = NO_KICK;
         }
@@ -273,14 +273,11 @@ World::World(RobotsFomation* form1, RobotsFomation* form2) {
 }
 
 int World::robotIndex(int robot, int team) {
-    if (robot >= cfg->Robots_Count()) return -1;
-    return robot + team * cfg->Robots_Count();
+    if (robot >= getConf().game.robot_count) return -1;
+    return robot + team * getConf().game.robot_count;
 }
 
-World::~World() {
-    delete g;
-    delete p;
-}
+World::~World() { delete p; }
 
 void World::step(dReal dt) {
     if (customDT > 0) dt = customDT;
@@ -294,12 +291,13 @@ void World::step(dReal dt) {
         dReal ballfx = 0, ballfy = 0, ballfz = 0;
         dReal balltx = 0, ballty = 0, balltz = 0;
         if (ballspeed > 0.01) {
-            dReal fk = cfg->BallFriction() * cfg->BallMass() * cfg->Gravity();
+            dReal fk = getConf().ball.friction * getConf().ball.mass *
+                       getConf().game.gravity;
             ballfx = -fk * ballvel[0] / ballspeed;
             ballfy = -fk * ballvel[1] / ballspeed;
             ballfz = -fk * ballvel[2] / ballspeed;
-            balltx = -ballfy * cfg->BallRadius();
-            ballty = ballfx * cfg->BallRadius();
+            balltx = -ballfy * getConf().ball.radius;
+            ballty = ballfx * getConf().ball.radius;
             balltz = 0;
             dBodyAddTorque(ball->body, balltx, ballty, balltz);
         }
@@ -417,7 +415,8 @@ void World::recvActions() {
                     if (!packet.commands().robot_commands(i).has_id()) continue;
                     int k = packet.commands().robot_commands(i).id();
                     int id = robotIndex(k, team);
-                    if ((id < 0) || (id >= cfg->Robots_Count() * 2)) continue;
+                    if ((id < 0) || (id >= getConf().game.robot_count * 2))
+                        continue;
                     bool wheels = false;
                     if (packet.commands().robot_commands(i).has_wheelsspeed()) {
                         if (packet.commands().robot_commands(i).wheelsspeed() ==
@@ -512,7 +511,8 @@ void World::recvActions() {
                     if (packet.replacement().robots(i).has_turnon())
                         turnon = packet.replacement().robots(i).turnon();
                     int id = robotIndex(k, team);
-                    if ((id < 0) || (id >= cfg->Robots_Count() * 2)) continue;
+                    if ((id < 0) || (id >= getConf().game.robot_count * 2))
+                        continue;
                     robots[id]->setXY(x, y);
                     robots[id]->resetRobot();
                     robots[id]->setDir(dir);
@@ -545,7 +545,7 @@ void World::recvActions() {
         for (int team = 0; team < 2; ++team) {
             Robots_Status robotsPacket;
             bool updateRobotStatus = false;
-            for (int i = 0; i < this->cfg->Robots_Count(); ++i) {
+            for (int i = 0; i < getConf().game.robot_count; ++i) {
                 int id = robotIndex(i, team);
                 bool isInfrared = robots[id]->kicker->isTouchingBall();
                 KickStatus kicking = robots[id]->kicker->isKicking();
@@ -601,21 +601,6 @@ SSL_WrapperPacket* World::generatePacket(int cam_id) {
     if (sendGeomCount++ % cfg->sendGeometryEvery() == 0) {
         SSL_GeometryData* geom = packet->mutable_geometry();
         SSL_GeometryFieldSize* field = geom->mutable_field();
-
-        // Old protocol
-        //        field->set_line_width(CONVUNIT(cfg->Field_Line_Width()));
-        //        field->set_referee_width(CONVUNIT(cfg->Field_Referee_Margin()));
-        //        field->set_goal_wall_width(CONVUNIT(cfg->Goal_Thickness()));
-        //        field->set_center_circle_radius(CONVUNIT(cfg->Field_Rad()));
-        //        field->set_defense_radius(CONVUNIT(cfg->Field_Defense_Rad()));
-        //        field->set_defense_stretch(CONVUNIT(cfg->Field_Defense_Stretch()));
-        //        field->set_free_kick_from_defense_dist(CONVUNIT(cfg->Field_Free_Kick()));
-        // TODO: verify if these fields are correct:
-        //        field->set_penalty_line_from_spot_dist(CONVUNIT(cfg->Field_Penalty_Line()));
-        //        field->set_penalty_spot_from_field_line_dist(CONVUNIT(cfg->Field_Penalty_Point()));
-
-        // Current protocol (2015+)
-        // Field general info
         field->set_field_length(CONVUNIT(cfg->Field_Length()));
         field->set_field_width(CONVUNIT(cfg->Field_Width()));
         field->set_boundary_width(CONVUNIT(cfg->Field_Margin()));
@@ -641,7 +626,7 @@ SSL_WrapperPacket* World::generatePacket(int cam_id) {
             vball->set_confidence(0.9 + rand0_1() * 0.1);
         }
     }
-    for (int i = 0; i < cfg->Robots_Count(); i++) {
+    for (int i = 0; i < getConf().game.robot_count; i++) {
         if ((cfg->vanishing() == false) ||
             (rand0_1() > cfg->blue_team_vanishing())) {
             if (!robots[i]->on) continue;
@@ -667,7 +652,8 @@ SSL_WrapperPacket* World::generatePacket(int cam_id) {
             }
         }
     }
-    for (int i = cfg->Robots_Count(); i < cfg->Robots_Count() * 2; i++) {
+    for (int i = getConf().game.robot_count; i < getConf().game.robot_count * 2;
+         i++) {
         if ((cfg->vanishing() == false) ||
             (rand0_1() > cfg->yellow_team_vanishing())) {
             if (!robots[i]->on) continue;
@@ -682,7 +668,7 @@ SSL_WrapperPacket* World::generatePacket(int cam_id) {
             if (visibleInCam(cam_id, x, y)) {
                 SSL_DetectionRobot* rob =
                     packet->mutable_detection()->add_robots_yellow();
-                rob->set_robot_id(i - cfg->Robots_Count());
+                rob->set_robot_id(i - getConf().game.robot_count);
                 rob->set_pixel_x(x * 1000.0f);
                 rob->set_pixel_y(y * 1000.0f);
                 rob->set_confidence(1);

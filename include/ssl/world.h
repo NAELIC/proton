@@ -28,8 +28,10 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 
 #include "robot.h"
 // #include "configwidget.h"
+#include <string>
 
 #include "config.h"
+#include "constant.h"
 #include "grSim_Commands.pb.h"
 #include "grSim_Packet.pb.h"
 #include "grSim_Replacement.pb.h"
@@ -38,8 +40,6 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 #include "messages_robocup_ssl_refbox_log.pb.h"
 #include "messages_robocup_ssl_robot_status.pb.h"
 #include "messages_robocup_ssl_wrapper.pb.h"
-
-#include "constant.h"
 
 class RobotsFomation;
 class SendingPacket {
@@ -70,7 +70,7 @@ class World {
     void addFieldLine(SSL_GeometryFieldSize* field, const std::string& name,
                       float p1_x, float p1_y, float p2_x, float p2_y,
                       float thickness);
-    void addFieldArc(SSL_GeometryFieldSize* field, const string& name,
+    void addFieldArc(SSL_GeometryFieldSize* field, const std::string& name,
                      float c_x, float c_y, float radius, float a1, float a2,
                      float thickness);
     void sendVisionBuffer();
@@ -85,21 +85,21 @@ class World {
     PBall* ball;
     PGround* ground;
     PRay* ray;
-    PFixedBox* walls[WALL_COUNT];
+    PFixedBox* walls[MAX_NB_WALL];
     int selected;
     dReal cursor_x, cursor_y, cursor_z;
     dReal cursor_radius;
-    RoboCupSSLServer* visionServer;
-    QUdpSocket* commandSocket;
-    QUdpSocket *blueStatusSocket, *yellowStatusSocket;
+    // RoboCupSSLServer* visionServer;
+    // QUdpSocket* commandSocket;
+    // QUdpSocket *blueStatusSocket, *yellowStatusSocket;
     bool updatedCursor;
-    Robot* robots[MAX_ROBOT_COUNT * 2];
-    QTime* timer;
+    Robot* robots[MAX_ROBOT * 2];
+    // QTime* timer;
     int sendGeomCount;
-   public slots:
-    void recvActions();
-   signals:
-    void fpsChanged(int newFPS);
+    //    public slots:
+    //     void recvActions();
+    //    signals:
+    //     void fpsChanged(int newFPS);
 };
 
 class RobotsFomation {

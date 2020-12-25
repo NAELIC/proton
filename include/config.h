@@ -41,14 +41,14 @@ struct Communication {
     unsigned int blue_status_port{30011};
     unsigned int yellow_status_port{30012};
     unsigned int send_delay{0};
-    unsigned int send_geometry{120};
+    unsigned int send_geometry_every{120};
 };
 
 struct Noise {
     bool noise{false};
-    double noise_deviation_x{3};
-    double noise_deviation_y{3};
-    double noiseDeviation_angle{2};
+    double deviation_x{3};
+    double deviation_y{3};
+    double deviation_angle{2};
 
     bool vanishing{false};
     double blue_team_vanishing{0};
@@ -102,6 +102,8 @@ class Config {
     Ball ball;
     Game game;
     RobotSetting robot_setting;
+    Noise noise;
+    Communication com;
 };
 
 extern Config& getConf();

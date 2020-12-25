@@ -59,6 +59,9 @@ class World {
     bool lastInfraredState[NB_TEAM][MAX_ROBOT];
     KickStatus lastKickState[NB_TEAM][MAX_ROBOT];
 
+    std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds>
+        frame_time;
+
    public:
     dReal customDT;
     World(RobotsFomation* form1, RobotsFomation* form2);
@@ -78,8 +81,8 @@ class World {
     int robotIndex(int robot, int team);
     void addRobotStatus(Robots_Status& robotsPacket, int robotID, int team,
                         bool infrared, KickStatus kickStatus);
-    void sendRobotStatus(Robots_Status& robotsPacket, QHostAddress sender,
-                         int team);
+    // void sendRobotStatus(Robots_Status& robotsPacket, QHostAddress sender,
+    //                      int team);
 
     PWorld* p;
     PBall* ball;

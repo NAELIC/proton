@@ -11,5 +11,5 @@ class Proton {
     void tick();
 
    private:
-    bool first{false};
+    bool first{true};
 };

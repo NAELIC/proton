@@ -18,3 +18,5 @@ void Proton::tick() {
         world->step(delta_time.count());
     }
 }
+
+Proton::~Proton() { delete world; }

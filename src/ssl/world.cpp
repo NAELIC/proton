@@ -113,10 +113,10 @@ bool ballCallBack(dGeomID o1, dGeomID o2, PSurface* s, int /*robots_count*/) {
 }
 
 World::World(RobotsFomation* form1, RobotsFomation* form2) {
-    // customDT = -1;
-    // _w = this;
-    // framenum = 0;
-    // last_dt = -1;
+    customDT = -1;
+    _w = this;
+    framenum = 0;
+    last_dt = -1;
     // TODO : Rename to p
     p = new PWorld(0.05, 9.81, getConf().game.robot_count);
     ball = new PBall(0, 0, 0.5, getConf().ball.radius, getConf().ball.mass, 1,
@@ -824,7 +824,8 @@ void World::sendVisionBuffer() {
         SSL_WrapperPacket* packet = sendQueue.front()->packet;
         delete sendQueue.front();
         sendQueue.pop();
-        visionServer->send(*packet);
+        std:: cout << packet->DebugString() << std::endl;
+        // visionServer->send(*packet);
         delete packet;
         if (sendQueue.empty()) break;
     }

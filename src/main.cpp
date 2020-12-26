@@ -7,6 +7,7 @@
 
 #include "net/udp_client.h"
 #include "net/udp_server.h"
+#include "proton.h"
 
 bool running = true;
 
@@ -38,24 +39,23 @@ void test_client(boost::asio::io_context& io_context) {
 }
 
 void update(const boost::system::error_code& /*e*/,
-           boost::asio::steady_timer* t) {
+           boost::asio::steady_timer* t, Proton* proton) {
     if (running) {
-
-        std::cout << "Hello" << std::endl;
-
+        proton->tick();
         t->expires_at(t->expiry() + boost::asio::chrono::milliseconds(60));
         t->async_wait(
-            boost::bind(update, boost::asio::placeholders::error, t));
+            boost::bind(update, boost::asio::placeholders::error, t, proton));
     }
 }
 
 int main(int argc, char const* argv[]) {
     signal(SIGINT, signalHandler);
+    auto proton = Proton();
     boost::asio::io_context io;
 
     boost::asio::steady_timer t(io, boost::asio::chrono::milliseconds(60));
     t.async_wait(
-        boost::bind(update, boost::asio::placeholders::error, &t));
+        boost::bind(update, boost::asio::placeholders::error, &t, &proton));
 
     io.run();
 

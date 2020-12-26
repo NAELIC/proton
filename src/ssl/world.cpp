@@ -311,6 +311,7 @@ void World::step(dReal dt) {
 
         selected = -1;
         p->step(dt / ballCollisionTry);
+        recvActions();
     }
 
     int best_k = -1;
@@ -399,179 +400,144 @@ void World::addRobotStatus(Robots_Status& robotsPacket, int robotID, int team,
 //     }
 // }
 
-// void World::recvActions() {
-//     QHostAddress sender;
-//     quint16 port;
-//     grSim_Packet packet;
-//     while (commandSocket->hasPendingDatagrams()) {
-//         int size =
-//             commandSocket->readDatagram(in_buffer, 65536, &sender, &port);
-//         if (size > 0) {
-//             packet.ParseFromArray(in_buffer, size);
-//             int team = 0;
-//             if (packet.has_commands()) {
-//                 if (packet.commands().has_isteamyellow()) {
-//                     if (packet.commands().isteamyellow()) team = 1;
-//                 }
-//                 for (int i = 0; i < packet.commands().robot_commands_size();
-//                      i++) {
-//                     if (!packet.commands().robot_commands(i).has_id())
-//                     continue; int k =
-//                     packet.commands().robot_commands(i).id(); int id =
-//                     robotIndex(k, team); if ((id < 0) || (id >=
-//                     getConf().game.robot_count * 2))
-//                         continue;
-//                     bool wheels = false;
-//                     if
-//                     (packet.commands().robot_commands(i).has_wheelsspeed()) {
-//                         if (packet.commands().robot_commands(i).wheelsspeed()
-//                         ==
-//                             true) {
-//                             if (packet.commands()
-//                                     .robot_commands(i)
-//                                     .has_wheel1())
-//                                 robots[id]->setSpeed(0, packet.commands()
-//                                                             .robot_commands(i)
-//                                                             .wheel1());
-//                             if (packet.commands()
-//                                     .robot_commands(i)
-//                                     .has_wheel2())
-//                                 robots[id]->setSpeed(1, packet.commands()
-//                                                             .robot_commands(i)
-//                                                             .wheel2());
-//                             if (packet.commands()
-//                                     .robot_commands(i)
-//                                     .has_wheel3())
-//                                 robots[id]->setSpeed(2, packet.commands()
-//                                                             .robot_commands(i)
-//                                                             .wheel3());
-//                             if (packet.commands()
-//                                     .robot_commands(i)
-//                                     .has_wheel4())
-//                                 robots[id]->setSpeed(3, packet.commands()
-//                                                             .robot_commands(i)
-//                                                             .wheel4());
-//                             wheels = true;
-//                         }
-//                     }
-//                     if (!wheels) {
-//                         dReal vx = 0;
-//                         if (packet.commands()
-//                                 .robot_commands(i)
-//                                 .has_veltangent())
-//                             vx = packet.commands()
-//                                      .robot_commands(i)
-//                                      .veltangent();
-//                         dReal vy = 0;
-//                         if
-//                         (packet.commands().robot_commands(i).has_velnormal())
-//                             vy =
-//                                 packet.commands().robot_commands(i).velnormal();
-//                         dReal vw = 0;
-//                         if (packet.commands()
-//                                 .robot_commands(i)
-//                                 .has_velangular())
-//                             vw = packet.commands()
-//                                      .robot_commands(i)
-//                                      .velangular();
-//                         robots[id]->setSpeed(vx, vy, vw);
-//                     }
-//                     dReal kickx = 0, kickz = 0;
-//                     bool kick = false;
-//                     if (packet.commands().robot_commands(i).has_kickspeedx())
-//                     {
-//                         kick = true;
-//                         kickx =
-//                             packet.commands().robot_commands(i).kickspeedx();
-//                     }
-//                     if (packet.commands().robot_commands(i).has_kickspeedz())
-//                     {
-//                         kick = true;
-//                         kickz =
-//                             packet.commands().robot_commands(i).kickspeedz();
-//                     }
-//                     if (kick && ((kickx > 0.0001) || (kickz > 0.0001)))
-//                         robots[id]->kicker->kick(kickx, kickz);
-//                     int rolling = 0;
-//                     if (packet.commands().robot_commands(i).has_spinner()) {
-//                         if (packet.commands().robot_commands(i).spinner())
-//                             rolling = 1;
-//                     }
-//                     robots[id]->kicker->setRoller(rolling);
-//                 }
-//             }
-//             if (packet.has_replacement()) {
-//                 for (int i = 0; i < packet.replacement().robots_size(); i++)
-//                 {
-//                     int team = 0;
-//                     if (packet.replacement().robots(i).has_yellowteam()) {
-//                         if (packet.replacement().robots(i).yellowteam())
-//                             team = 1;
-//                     }
-//                     if (!packet.replacement().robots(i).has_id()) continue;
-//                     int k = packet.replacement().robots(i).id();
-//                     dReal x = 0, y = 0, dir = 0;
-//                     bool turnon = true;
-//                     if (packet.replacement().robots(i).has_x())
-//                         x = packet.replacement().robots(i).x();
-//                     if (packet.replacement().robots(i).has_y())
-//                         y = packet.replacement().robots(i).y();
-//                     if (packet.replacement().robots(i).has_dir())
-//                         dir = packet.replacement().robots(i).dir();
-//                     if (packet.replacement().robots(i).has_turnon())
-//                         turnon = packet.replacement().robots(i).turnon();
-//                     int id = robotIndex(k, team);
-//                     if ((id < 0) || (id >= getConf().game.robot_count * 2))
-//                         continue;
-//                     robots[id]->setXY(x, y);
-//                     robots[id]->resetRobot();
-//                     robots[id]->setDir(dir);
-//                     robots[id]->on = turnon;
-//                 }
-//                 if (packet.replacement().has_ball()) {
-//                     dReal x = 0, y = 0, z = 0, vx = 0, vy = 0;
-//                     ball->getBodyPosition(x, y, z);
-//                     const auto vel_vec = dBodyGetLinearVel(ball->body);
-//                     vx = vel_vec[0];
-//                     vy = vel_vec[1];
+void World::recvActions() {
+    while (!commandSocket->packets.empty()) {
+        grSim_Packet packet = commandSocket->packets.front();
+        commandSocket->packets.pop();
+        int team = 0;
+        if (packet.has_commands()) {
+            if (packet.commands().has_isteamyellow()) {
+                if (packet.commands().isteamyellow()) team = 1;
+            }
+            for (int i = 0; i < packet.commands().robot_commands_size(); i++) {
+                if (!packet.commands().robot_commands(i).has_id()) continue;
+                int k = packet.commands().robot_commands(i).id();
+                int id = robotIndex(k, team);
+                if ((id < 0) || (id >= getConf().game.robot_count * 2))
+                    continue;
+                bool wheels = false;
+                if (packet.commands().robot_commands(i).has_wheelsspeed()) {
+                    if (packet.commands().robot_commands(i).wheelsspeed() ==
+                        true) {
+                        if (packet.commands().robot_commands(i).has_wheel1())
+                            robots[id]->setSpeed(
+                                0,
+                                packet.commands().robot_commands(i).wheel1());
+                        if (packet.commands().robot_commands(i).has_wheel2())
+                            robots[id]->setSpeed(
+                                1,
+                                packet.commands().robot_commands(i).wheel2());
+                        if (packet.commands().robot_commands(i).has_wheel3())
+                            robots[id]->setSpeed(
+                                2,
+                                packet.commands().robot_commands(i).wheel3());
+                        if (packet.commands().robot_commands(i).has_wheel4())
+                            robots[id]->setSpeed(
+                                3,
+                                packet.commands().robot_commands(i).wheel4());
+                        wheels = true;
+                    }
+                }
+                if (!wheels) {
+                    dReal vx = 0;
+                    if (packet.commands().robot_commands(i).has_veltangent())
+                        vx = packet.commands().robot_commands(i).veltangent();
+                    dReal vy = 0;
+                    if (packet.commands().robot_commands(i).has_velnormal())
+                        vy = packet.commands().robot_commands(i).velnormal();
+                    dReal vw = 0;
+                    if (packet.commands().robot_commands(i).has_velangular())
+                        vw = packet.commands().robot_commands(i).velangular();
+                    robots[id]->setSpeed(vx, vy, vw);
+                }
+                dReal kickx = 0, kickz = 0;
+                bool kick = false;
+                if (packet.commands().robot_commands(i).has_kickspeedx()) {
+                    kick = true;
+                    kickx = packet.commands().robot_commands(i).kickspeedx();
+                }
+                if (packet.commands().robot_commands(i).has_kickspeedz()) {
+                    kick = true;
+                    kickz = packet.commands().robot_commands(i).kickspeedz();
+                }
+                if (kick && ((kickx > 0.0001) || (kickz > 0.0001)))
+                    robots[id]->kicker->kick(kickx, kickz);
+                int rolling = 0;
+                if (packet.commands().robot_commands(i).has_spinner()) {
+                    if (packet.commands().robot_commands(i).spinner())
+                        rolling = 1;
+                }
+                robots[id]->kicker->setRoller(rolling);
+            }
+        }
+        if (packet.has_replacement()) {
+            for (int i = 0; i < packet.replacement().robots_size(); i++) {
+                int team = 0;
+                if (packet.replacement().robots(i).has_yellowteam()) {
+                    if (packet.replacement().robots(i).yellowteam()) team = 1;
+                }
+                if (!packet.replacement().robots(i).has_id()) continue;
+                int k = packet.replacement().robots(i).id();
+                dReal x = 0, y = 0, dir = 0;
+                bool turnon = true;
+                if (packet.replacement().robots(i).has_x())
+                    x = packet.replacement().robots(i).x();
+                if (packet.replacement().robots(i).has_y())
+                    y = packet.replacement().robots(i).y();
+                if (packet.replacement().robots(i).has_dir())
+                    dir = packet.replacement().robots(i).dir();
+                if (packet.replacement().robots(i).has_turnon())
+                    turnon = packet.replacement().robots(i).turnon();
+                int id = robotIndex(k, team);
+                if ((id < 0) || (id >= getConf().game.robot_count * 2))
+                    continue;
+                robots[id]->setXY(x, y);
+                robots[id]->resetRobot();
+                robots[id]->setDir(dir);
+                robots[id]->on = turnon;
+            }
+            if (packet.replacement().has_ball()) {
+                dReal x = 0, y = 0, z = 0, vx = 0, vy = 0;
+                ball->getBodyPosition(x, y, z);
+                const auto vel_vec = dBodyGetLinearVel(ball->body);
+                vx = vel_vec[0];
+                vy = vel_vec[1];
 
-//                     if (packet.replacement().ball().has_x())
-//                         x = packet.replacement().ball().x();
-//                     if (packet.replacement().ball().has_y())
-//                         y = packet.replacement().ball().y();
-//                     if (packet.replacement().ball().has_vx())
-//                         vx = packet.replacement().ball().vx();
-//                     if (packet.replacement().ball().has_vy())
-//                         vy = packet.replacement().ball().vy();
+                if (packet.replacement().ball().has_x())
+                    x = packet.replacement().ball().x();
+                if (packet.replacement().ball().has_y())
+                    y = packet.replacement().ball().y();
+                if (packet.replacement().ball().has_vx())
+                    vx = packet.replacement().ball().vx();
+                if (packet.replacement().ball().has_vy())
+                    vy = packet.replacement().ball().vy();
 
-//                     ball->setBodyPosition(x, y, cfg->BallRadius() * 1.2);
-//                     dBodySetLinearVel(ball->body, vx, vy, 0);
-//                     dBodySetAngularVel(ball->body, 0, 0, 0);
-//                 }
-//             }
-//         }
+                ball->setBodyPosition(x, y, getConf().ball.radius * 1.2);
+                dBodySetLinearVel(ball->body, vx, vy, 0);
+                dBodySetAngularVel(ball->body, 0, 0, 0);
+            }
+        }
+    }
 
-//         // send robot status
-//         for (int team = 0; team < 2; ++team) {
-//             Robots_Status robotsPacket;
-//             bool updateRobotStatus = false;
-//             for (int i = 0; i < getConf().game.robot_count; ++i) {
-//                 int id = robotIndex(i, team);
-//                 bool isInfrared = robots[id]->kicker->isTouchingBall();
-//                 KickStatus kicking = robots[id]->kicker->isKicking();
-//                 if (isInfrared != lastInfraredState[team][i] ||
-//                     kicking != lastKickState[team][i]) {
-//                     updateRobotStatus = true;
-//                     addRobotStatus(robotsPacket, i, team, isInfrared,
-//                     kicking); lastInfraredState[team][i] = isInfrared;
-//                     lastKickState[team][i] = kicking;
-//                 }
-//             }
-//             if (updateRobotStatus) sendRobotStatus(robotsPacket, sender,
-//             team);
-//         }
-//     }
-// }
+    // send robot status
+    for (int team = 0; team < 2; ++team) {
+        Robots_Status robotsPacket;
+        bool updateRobotStatus = false;
+        for (int i = 0; i < getConf().game.robot_count; ++i) {
+            int id = robotIndex(i, team);
+            bool isInfrared = robots[id]->kicker->isTouchingBall();
+            KickStatus kicking = robots[id]->kicker->isKicking();
+            if (isInfrared != lastInfraredState[team][i] ||
+                kicking != lastKickState[team][i]) {
+                updateRobotStatus = true;
+                addRobotStatus(robotsPacket, i, team, isInfrared, kicking);
+                lastInfraredState[team][i] = isInfrared;
+                lastKickState[team][i] = kicking;
+            }
+        }
+        // if (updateRobotStatus) sendRobotStatus(robotsPacket, sender, team);
+    }
+}
 
 dReal normalizeAngle(dReal a) {
     if (a > 180) return -360 + a;

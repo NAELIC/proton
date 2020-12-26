@@ -27,7 +27,7 @@ void UDPClient::do_receive() {
                 grSim_Packet packet;
                 packet.ParseFromArray(data_.data(), length);
                 std::cout << packet.DebugString() << std::endl;
-
+                packets.push(packet);
                 do_receive();
             }
         });

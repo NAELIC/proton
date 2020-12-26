@@ -5,6 +5,7 @@
 #include <boost/bind.hpp>
 #include <iostream>
 #include <string>
+#include <queue>
 
 #include "grSim_Packet.pb.h"
 
@@ -13,6 +14,8 @@ class UDPClient {
     UDPClient(std::string listen_addr, std::string multicast_addr,
               unsigned int port, boost::asio::io_context& io_context);
     void do_receive();
+
+    std::queue<grSim_Packet> packets;
 
    private:
     boost::asio::ip::udp::socket socket_;

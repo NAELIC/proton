@@ -102,7 +102,7 @@ class World {
     // QTime* timer;
     int sendGeomCount;
     //    public slots:
-    //     void recvActions();
+    void recvActions();
     //    signals:
     //     void fpsChanged(int newFPS);
 };

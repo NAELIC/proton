@@ -9,10 +9,13 @@
 #include "net/udp_server.h"
 #include "proton.h"
 
+boost::asio::io_context io;
 bool running = true;
 
 void signalHandler(int signum) {
     running = false;
+    io.stop();
+    exit(0);
 }
 
 // void test_server(boost::asio::io_context& io_context) {
@@ -31,15 +34,15 @@ void signalHandler(int signum) {
 //     std::string address_grsim = "224.5.23.2";
 //     std::string listen_address = "0.0.0.0";
 
-//     UDPClient client(listen_address, address_grsim, port_command, io_context);
-//     while (running) {
+//     UDPClient client(listen_address, address_grsim, port_command,
+//     io_context); while (running) {
 //         std::cout << "test" << std::endl;
 //         usleep(60);
 //     };
 // }
 
 void update(const boost::system::error_code& /*e*/,
-           boost::asio::steady_timer* t, Proton* proton) {
+            boost::asio::steady_timer* t, Proton* proton) {
     if (running) {
         proton->tick();
         t->expires_at(t->expiry() + boost::asio::chrono::milliseconds(60));
@@ -50,7 +53,6 @@ void update(const boost::system::error_code& /*e*/,
 
 int main(int argc, char const* argv[]) {
     signal(SIGINT, signalHandler);
-    boost::asio::io_context io;
     auto proton = Proton(io);
 
     boost::asio::steady_timer t(io, boost::asio::chrono::milliseconds(60));

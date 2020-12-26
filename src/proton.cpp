@@ -2,10 +2,19 @@
 
 Proton::Proton(boost::asio::io_context& io)
     : vision_server(getConf().com.vision_multicast_adress,
-                    getConf().com.vision_multicast_port, io) {
+                    getConf().com.vision_multicast_port, io),
+      command_server("0.0.0.0", getConf().com.vision_multicast_adress,
+                     getConf().com.command_listen_port, io) {
     auto r = new RobotsFomation(1);
     world = new World(r, r);
+    // unsigned int port_command = 20011;
+    //     std::string address_grsim = "224.5.23.2";
+    //     std::string listen_address = "0.0.0.0";
+
+    UDPClient client("0.0.0.0", getConf().com.vision_multicast_adress,
+                     getConf().com.command_listen_port, io);
     world->visionServer = &vision_server;
+    world->commandSocket = &command_server;
 }
 
 void Proton::tick() {

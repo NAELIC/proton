@@ -24,8 +24,9 @@ void UDPClient::do_receive() {
         asio::buffer(data_), sender_endpoint_,
         [this](system::error_code ec, std::size_t length) {
             if (!ec) {
-                std::cout.write(data_.data(), length);
-                std::cout << std::endl;
+                grSim_Packet packet;
+                packet.ParseFromArray(data_.data(), length);
+                std::cout << packet.DebugString() << std::endl;
 
                 do_receive();
             }

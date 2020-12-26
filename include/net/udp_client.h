@@ -6,6 +6,8 @@
 #include <iostream>
 #include <string>
 
+#include "grSim_Packet.pb.h"
+
 class UDPClient {
    public:
     UDPClient(std::string listen_addr, std::string multicast_addr,

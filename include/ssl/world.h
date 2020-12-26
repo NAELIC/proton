@@ -25,6 +25,7 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 #include "physics/pworld.h"
 
 #include "net/udp_server.h"
+#include "net/udp_client.h"
 
 #include "robot.h"
 
@@ -94,7 +95,7 @@ class World {
     dReal cursor_x, cursor_y, cursor_z;
     dReal cursor_radius;
     UDPServer* visionServer;
-    // QUdpSocket* commandSocket;
+    UDPClient* commandSocket;
     // QUdpSocket *blueStatusSocket, *yellowStatusSocket;
     bool updatedCursor;
     Robot* robots[MAX_ROBOT * 2];

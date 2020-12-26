@@ -1,8 +1,11 @@
 #include "proton.h"
 
-Proton::Proton() {
+Proton::Proton(boost::asio::io_context& io)
+    : vision_server(getConf().com.vision_multicast_adress,
+                    getConf().com.vision_multicast_port, io) {
     auto r = new RobotsFomation(1);
     world = new World(r, r);
+    world->visionServer = &vision_server;
 }
 
 void Proton::tick() {

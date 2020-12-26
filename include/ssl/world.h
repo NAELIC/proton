@@ -24,7 +24,7 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 #include "physics/pray.h"
 #include "physics/pworld.h"
 
-// #include "net/robocup_ssl_server.h"
+#include "net/udp_server.h"
 
 #include "robot.h"
 
@@ -93,7 +93,7 @@ class World {
     int selected;
     dReal cursor_x, cursor_y, cursor_z;
     dReal cursor_radius;
-    // RoboCupSSLServer* visionServer;
+    UDPServer* visionServer;
     // QUdpSocket* commandSocket;
     // QUdpSocket *blueStatusSocket, *yellowStatusSocket;
     bool updatedCursor;

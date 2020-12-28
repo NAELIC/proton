@@ -18,6 +18,9 @@ endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR/}include)
 
+# add_compile_options(-Wall -Wextra -pedantic -Werror)
+add_compile_options(-Wall -Wextra -pedantic)
+
 # ODE
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
 find_package(ODE REQUIRED)

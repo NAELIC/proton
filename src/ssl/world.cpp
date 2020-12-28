@@ -385,25 +385,19 @@ void World::addRobotStatus(Robots_Status& robotsPacket, int robotID, int team,
     }
 }
 
-// void World::sendRobotStatus(Robots_Status& robotsPacket, QHostAddress sender,
-//                             int team) {
-//     int size = robotsPacket.ByteSize();
-//     QByteArray buffer(size, 0);
-//     robotsPacket.SerializeToArray(buffer.data(), buffer.size());
-//     if (team == 0) {
-//         blueStatusSocket->writeDatagram(buffer.data(), buffer.size(), sender,
-//                                         cfg->BlueStatusSendPort());
-//     } else {
-//         yellowStatusSocket->writeDatagram(buffer.data(), buffer.size(),
-//         sender,
-//                                           cfg->YellowStatusSendPort());
-//     }
-// }
+void World::sendRobotStatus(Robots_Status& robotsPacket, int team) {
+    if (team == 0) {
+        blueStatusSocket->send(&robotsPacket);
+    } else {
+        yellowStatusSocket->send(&robotsPacket);
+    }
+}
 
 void World::recvActions() {
     while (!commandSocket->packets.empty()) {
         grSim_Packet packet = commandSocket->packets.front();
         commandSocket->packets.pop();
+
         int team = 0;
         if (packet.has_commands()) {
             if (packet.commands().has_isteamyellow()) {
@@ -517,25 +511,28 @@ void World::recvActions() {
                 dBodySetAngularVel(ball->body, 0, 0, 0);
             }
         }
-    }
-
-    // send robot status
-    for (int team = 0; team < 2; ++team) {
-        Robots_Status robotsPacket;
-        bool updateRobotStatus = false;
-        for (int i = 0; i < getConf().game.robot_count; ++i) {
-            int id = robotIndex(i, team);
-            bool isInfrared = robots[id]->kicker->isTouchingBall();
-            KickStatus kicking = robots[id]->kicker->isKicking();
-            if (isInfrared != lastInfraredState[team][i] ||
-                kicking != lastKickState[team][i]) {
-                updateRobotStatus = true;
-                addRobotStatus(robotsPacket, i, team, isInfrared, kicking);
-                lastInfraredState[team][i] = isInfrared;
-                lastKickState[team][i] = kicking;
+        // send robot status
+        for (int team = 0; team < 2; ++team) {
+            Robots_Status robotsPacket;
+            bool updateRobotStatus = false;
+            for (int i = 0; i < getConf().game.robot_count; ++i) {
+                int id = robotIndex(i, team);
+                bool isInfrared = robots[id]->kicker->isTouchingBall();
+                KickStatus kicking = robots[id]->kicker->isKicking();
+                if (isInfrared != lastInfraredState[team][i] ||
+                    kicking != lastKickState[team][i] ||
+                    lastStatusSendCount[team][i] > 10) {
+                    updateRobotStatus = true;
+                    addRobotStatus(robotsPacket, i, team, isInfrared, kicking);
+                    lastInfraredState[team][i] = isInfrared;
+                    lastKickState[team][i] = kicking;
+                    lastStatusSendCount[team][i] = 0;
+                } else {
+                    lastStatusSendCount[team][i] += 1;
+                }
             }
+            if (updateRobotStatus) sendRobotStatus(robotsPacket, team);
         }
-        // if (updateRobotStatus) sendRobotStatus(robotsPacket, sender, team);
     }
 }
 

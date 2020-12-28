@@ -4,8 +4,8 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <iostream>
-#include <string>
 #include <queue>
+#include <string>
 
 #include "grSim_Packet.pb.h"
 

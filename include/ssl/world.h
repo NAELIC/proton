@@ -18,19 +18,8 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 
 #pragma once
 
-#include "physics/pball.h"
-#include "physics/pfixedbox.h"
-#include "physics/pground.h"
-#include "physics/pray.h"
-#include "physics/pworld.h"
-
-#include "net/udp_server.h"
-#include "net/udp_client.h"
-
-#include "robot.h"
-
-#include <string>
 #include <queue>
+#include <string>
 
 #include "config.h"
 #include "constant.h"
@@ -42,6 +31,14 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 #include "messages_robocup_ssl_refbox_log.pb.h"
 #include "messages_robocup_ssl_robot_status.pb.h"
 #include "messages_robocup_ssl_wrapper.pb.h"
+#include "net/udp_client.h"
+#include "net/udp_server.h"
+#include "physics/pball.h"
+#include "physics/pfixedbox.h"
+#include "physics/pground.h"
+#include "physics/pray.h"
+#include "physics/pworld.h"
+#include "robot.h"
 
 class RobotsFomation;
 class SendingPacket {
@@ -60,6 +57,7 @@ class World {
     char* in_buffer;
     bool lastInfraredState[NB_TEAM][MAX_ROBOT];
     KickStatus lastKickState[NB_TEAM][MAX_ROBOT];
+    int lastStatusSendCount[NB_TEAM][MAX_ROBOT];
 
     std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds>
         frame_time;
@@ -83,8 +81,7 @@ class World {
     int robotIndex(int robot, int team);
     void addRobotStatus(Robots_Status& robotsPacket, int robotID, int team,
                         bool infrared, KickStatus kickStatus);
-    // void sendRobotStatus(Robots_Status& robotsPacket, QHostAddress sender,
-    //                      int team);
+    void sendRobotStatus(Robots_Status& robotsPacket, int team);
 
     PWorld* p;
     PBall* ball;
@@ -94,9 +91,8 @@ class World {
     int selected;
     dReal cursor_x, cursor_y, cursor_z;
     dReal cursor_radius;
-    UDPServer* visionServer;
+    UDPServer *visionServer, *blueStatusSocket, *yellowStatusSocket;
     UDPClient* commandSocket;
-    // QUdpSocket *blueStatusSocket, *yellowStatusSocket;
     bool updatedCursor;
     Robot* robots[MAX_ROBOT * 2];
     // QTime* timer;

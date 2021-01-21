@@ -742,9 +742,9 @@ void World::sendVisionBuffer() {
                 .count();
 
     sendQueue.push(new SendingPacket(generatePacket(0), t));
-    sendQueue.push(new SendingPacket(generatePacket(1), t + 1));
-    sendQueue.push(new SendingPacket(generatePacket(2), t + 2));
-    sendQueue.push(new SendingPacket(generatePacket(3), t + 3));
+    sendQueue.push(new SendingPacket(generatePacket(1), t));
+    sendQueue.push(new SendingPacket(generatePacket(2), t));
+    sendQueue.push(new SendingPacket(generatePacket(3), t));
     while (t - sendQueue.front()->t >= getConf().com.send_delay) {
         SSL_WrapperPacket* packet = sendQueue.front()->packet;
         delete sendQueue.front();

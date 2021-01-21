@@ -20,14 +20,15 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 
 #include "pobject.h"
 
-class PCylinder : public PObject
-{
-private:
-    dReal m_radius,m_length;
-    int m_texid;
+class PCylinder : public PObject {
+   private:
+    dReal m_radius, m_length;
     bool m_robot;
-public:
-    PCylinder(dReal x,dReal y,dReal z,dReal radius,dReal length,dReal mass,dReal red,dReal green,dReal blue,int tex_id=-1,bool robot=false);
+
+   public:
+    PCylinder(dReal x, dReal y, dReal z, dReal radius, dReal length, dReal mass,
+              bool robot = false);
+              
     virtual ~PCylinder();
     virtual void setMass(dReal mass);
     virtual void init();

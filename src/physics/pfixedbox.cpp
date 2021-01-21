@@ -18,20 +18,12 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 
 #include "physics/pfixedbox.h"
 
-PFixedBox::PFixedBox(dReal x,dReal y,dReal z,dReal w,dReal h,dReal l,dReal r,dReal g,dReal b)
-       : PObject(x,y,z,r,g,b,0)
-{
-    m_w = w;
-    m_h = h;
-    m_l = l;
-}
+PFixedBox::PFixedBox(dReal x, dReal y, dReal z, dReal w, dReal h, dReal l)
+    : PObject(x, y, z, 0), m_w(w), m_h(h), m_l(l) {}
 
-PFixedBox::~PFixedBox()
-{
-}
+PFixedBox::~PFixedBox() {}
 
-void PFixedBox::init()
-{
-    geom = dCreateBox (space,m_w,m_h,m_l);
+void PFixedBox::init() {
+    geom = dCreateBox(space, m_w, m_h, m_l);
     initPosGeom();
 }

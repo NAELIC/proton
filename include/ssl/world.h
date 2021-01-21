@@ -69,7 +69,6 @@ class World {
     void step(dReal dt = -1);
     SSL_WrapperPacket* generatePacket(int cam_id = 0);
     void addFieldLinesArcs(SSL_GeometryFieldSize* field);
-    Vector2f* allocVector(float x, float y);
     void addFieldLine(SSL_GeometryFieldSize* field, const std::string& name,
                       float p1_x, float p1_y, float p2_x, float p2_y,
                       float thickness);
@@ -79,8 +78,8 @@ class World {
     void sendVisionBuffer();
     bool visibleInCam(int id, double x, double y);
     int robotIndex(int robot, int team);
-    void addRobotStatus(Robots_Status& robotsPacket, int robotID, int team,
-                        bool infrared, KickStatus kickStatus);
+    void addRobotStatus(Robots_Status& robotsPacket, int robotID, bool infrared,
+                        KickStatus kickStatus);
     void sendRobotStatus(Robots_Status& robotsPacket, int team);
 
     PWorld* p;
@@ -90,14 +89,11 @@ class World {
     PFixedBox* walls[MAX_NB_WALL];
     int selected;
     dReal cursor_x, cursor_y, cursor_z;
-    dReal cursor_radius;
     UDPServer *visionServer, *blueStatusSocket, *yellowStatusSocket;
     UDPClient* commandSocket;
-    bool updatedCursor;
     Robot* robots[MAX_ROBOT * 2];
-    // QTime* timer;
     int sendGeomCount;
-    //    public slots:
+
     void recvActions();
     //    signals:
     //     void fpsChanged(int newFPS);

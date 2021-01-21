@@ -20,8 +20,7 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 
 // ang2 = position angle
 // ang  = rotation angle
-Robot::Wheel::Wheel(Robot* robot, int _id, dReal ang, dReal ang2,
-                    int wheeltexid) {
+Robot::Wheel::Wheel(Robot* robot, int _id, dReal ang, dReal ang2) {
     id = _id;
     rob = robot;
     dReal rad = getConf().robot_setting.radius -
@@ -36,10 +35,10 @@ Robot::Wheel::Wheel(Robot* robot, int _id, dReal ang, dReal ang2,
     dReal centerz = z - getConf().robot_setting.height * 0.5 +
                     getConf().robot_setting.wheel_radius -
                     getConf().robot_setting.bottom_height;
-    cyl = new PCylinder(
-        centerx, centery, centerz, getConf().robot_setting.wheel_radius,
-        getConf().robot_setting.wheel_thickness,
-        getConf().robot_setting.wheel_mass, 0.9, 0.9, 0.9, wheeltexid);
+    cyl = new PCylinder(centerx, centery, centerz,
+                        getConf().robot_setting.wheel_radius,
+                        getConf().robot_setting.wheel_thickness,
+                        getConf().robot_setting.wheel_mass);
     cyl->setRotation(-sin(ang), cos(ang), 0, M_PI * 0.5);
     cyl->setBodyRotation(-sin(ang), cos(ang), 0, M_PI * 0.5,
                          true);  // set local rotation matrix
@@ -88,7 +87,7 @@ Robot::Kicker::Kicker(Robot* robot) : holdingBall(false) {
                    getConf().robot_setting.kicker_thickness,
                    getConf().robot_setting.kicker_width,
                    getConf().robot_setting.kicker_height,
-                   getConf().robot_setting.kicker_mass, 0.9, 0.9, 0.9);
+                   getConf().robot_setting.kicker_mass);
     box->setBodyPosition(centerx - x, centery - y, centerz - z, true);
     box->space = rob->space;
 
@@ -111,16 +110,13 @@ Robot::Kicker::Kicker(Robot* robot) : holdingBall(false) {
 void Robot::Kicker::step() {
     if (!isTouchingBall() || rolling == 0) unholdBall();
     if (kicking != NO_KICK) {
-        box->setColor(1, 0.3, 0);
         kickstate--;
         if (kickstate <= 0) kicking = NO_KICK;
     } else if (rolling != 0) {
-        box->setColor(1, 0.7, 0);
         if (isTouchingBall()) {
             holdBall();
         }
-    } else
-        box->setColor(0.9, 0.9, 0.9);
+    }
 }
 
 bool Robot::Kicker::isTouchingBall() {
@@ -192,7 +188,6 @@ void Robot::Kicker::holdBall() {
     kx += vx * getConf().robot_setting.kicker_thickness * 0.5f;
     ky += vy * getConf().robot_setting.kicker_thickness * 0.5f;
     dReal xx = fabs((kx - bx) * vx + (ky - by) * vy);
-    dReal yy = fabs(-(kx - bx) * vy + (ky - by) * vx);
     if (holdingBall || xx - getConf().ball.radius < 0) return;
     dBodySetLinearVel(rob->getBall()->body, 0, 0, 0);
     robot_to_ball = dJointCreateHinge(rob->getWorld()->world, 0);
@@ -207,11 +202,8 @@ void Robot::Kicker::unholdBall() {
     }
 }
 
-Robot::Robot(PWorld* world, PBall* ball, dReal x, dReal y, dReal z, dReal r,
-             dReal g, dReal b, int rob_id, int wheeltexid, int dir) {
-    m_r = r;
-    m_g = g;
-    m_b = b;
+Robot::Robot(PWorld* world, PBall* ball, dReal x, dReal y, dReal z, int rob_id,
+             int dir) {
     m_x = x;
     m_y = y;
     m_z = z;
@@ -222,16 +214,15 @@ Robot::Robot(PWorld* world, PBall* ball, dReal x, dReal y, dReal z, dReal r,
 
     space = w->space;
 
-    chassis = new PCylinder(
-        x, y, z, getConf().robot_setting.radius, getConf().robot_setting.height,
-        getConf().robot_setting.body_mass * 0.99f, r, g, b, rob_id, true);
+    chassis = new PCylinder(x, y, z, getConf().robot_setting.radius,
+                            getConf().robot_setting.height,
+                            getConf().robot_setting.body_mass * 0.99f, true);
     chassis->space = space;
     w->addObject(chassis);
 
     dummy = new PBall(x, y, z, getConf().robot_setting.center_from_kicker,
-                      getConf().robot_setting.body_mass * 0.01f, 0, 0, 0);
+                      getConf().robot_setting.body_mass * 0.01f);
 
-    dummy->setVisibility(false);
     dummy->space = space;
     w->addObject(dummy);
 
@@ -241,13 +232,13 @@ Robot::Robot(PWorld* world, PBall* ball, dReal x, dReal y, dReal z, dReal r,
     kicker = new Kicker(this);
 
     wheels[0] = new Wheel(this, 0, getConf().robot_setting.wheel_angle_1,
-                          getConf().robot_setting.wheel_angle_1, wheeltexid);
+                          getConf().robot_setting.wheel_angle_1);
     wheels[1] = new Wheel(this, 1, getConf().robot_setting.wheel_angle_2,
-                          getConf().robot_setting.wheel_angle_2, wheeltexid);
+                          getConf().robot_setting.wheel_angle_2);
     wheels[2] = new Wheel(this, 2, getConf().robot_setting.wheel_angle_3,
-                          getConf().robot_setting.wheel_angle_3, wheeltexid);
+                          getConf().robot_setting.wheel_angle_3);
     wheels[3] = new Wheel(this, 3, getConf().robot_setting.wheel_angle_4,
-                          getConf().robot_setting.wheel_angle_4, wheeltexid);
+                          getConf().robot_setting.wheel_angle_4);
     firsttime = true;
     on = true;
 }
@@ -423,8 +414,4 @@ void Robot::setSpeed(dReal vx, dReal vy, dReal vw) {
 dReal Robot::getSpeed(int i) {
     if ((i >= 4) || (i < 0)) return -1;
     return wheels[i]->speed;
-}
-
-void Robot::incSpeed(int i, dReal v) {
-    if (!((i >= 4) || (i < 0))) wheels[i]->speed += v;
 }

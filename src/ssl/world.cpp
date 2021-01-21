@@ -68,7 +68,6 @@ bool wheelCallBack(dGeomID o1, dGeomID o2, PSurface* s, int /*robots_count*/) {
 }
 
 bool rayCallback(dGeomID o1, dGeomID o2, PSurface* s, int robots_count) {
-    if (!_w->updatedCursor) return false;
     dGeomID obj;
     if (o1 == _w->ray->geom)
         obj = o2;
@@ -119,12 +118,8 @@ World::World(RobotsFomation* form1, RobotsFomation* form2) {
     last_dt = -1;
     // TODO : Rename to p
     p = new PWorld(0.05, 9.81, getConf().game.robot_count);
-    ball = new PBall(0, 0, 0.5, getConf().ball.radius, getConf().ball.mass, 1,
-                     0.7, 0),
-    ground = new PGround(
-        getConf().field.radius, getConf().field.length, getConf().field.width,
-        getConf().field.penalty_depth, getConf().field.penalty_width,
-        getConf().field.penalty_point, getConf().field.line_width, 0);
+    ball = new PBall(0, 0, 0.5, getConf().ball.radius, getConf().ball.mass),
+    ground = new PGround();
     ray = new PRay(50);
 
     const double thick = getConf().field.wall_thickness;
@@ -136,19 +131,14 @@ World::World(RobotsFomation* form1, RobotsFomation* form2) {
     const double siz_x = 2.0 * pos_x;
     const double siz_y = 2.0 * pos_y;
     const double siz_z = 0.4;
-    const double tone = 1.0;
 
-    walls[0] = new PFixedBox(thick / 2, pos_y, pos_z, siz_x, thick, siz_z, tone,
-                             tone, tone);
+    walls[0] = new PFixedBox(thick / 2, pos_y, pos_z, siz_x, thick, siz_z);
 
-    walls[1] = new PFixedBox(-thick / 2, -pos_y, pos_z, siz_x, thick, siz_z,
-                             tone, tone, tone);
+    walls[1] = new PFixedBox(-thick / 2, -pos_y, pos_z, siz_x, thick, siz_z);
 
-    walls[2] = new PFixedBox(pos_x, -thick / 2, pos_z, thick, siz_y, siz_z,
-                             tone, tone, tone);
+    walls[2] = new PFixedBox(pos_x, -thick / 2, pos_z, thick, siz_y, siz_z);
 
-    walls[3] = new PFixedBox(-pos_x, thick / 2, pos_z, thick, siz_y, siz_z,
-                             tone, tone, tone);
+    walls[3] = new PFixedBox(-pos_x, thick / 2, pos_z, thick, siz_y, siz_z);
 
     // Goal walls
 
@@ -162,47 +152,34 @@ World::World(RobotsFomation* form1, RobotsFomation* form2) {
     const double gsiz_z = getConf().field.goal_height;
     const double gpos2_x = (getConf().field.length + gsiz_x) / 2.0;
 
-    walls[4] = new PFixedBox(gpos_x, 0.0, gpos_z, gthick, gsiz_y, gsiz_z, tone,
-                             tone, tone);
+    walls[4] = new PFixedBox(gpos_x, 0.0, gpos_z, gthick, gsiz_y, gsiz_z);
 
-    walls[5] = new PFixedBox(gpos2_x, -gpos_y, gpos_z, gsiz_x, gthick, gsiz_z,
-                             tone, tone, tone);
+    walls[5] = new PFixedBox(gpos2_x, -gpos_y, gpos_z, gsiz_x, gthick, gsiz_z);
 
-    walls[6] = new PFixedBox(gpos2_x, gpos_y, gpos_z, gsiz_x, gthick, gsiz_z,
-                             tone, tone, tone);
+    walls[6] = new PFixedBox(gpos2_x, gpos_y, gpos_z, gsiz_x, gthick, gsiz_z);
 
-    walls[7] = new PFixedBox(-gpos_x, 0.0, gpos_z, gthick, gsiz_y, gsiz_z, tone,
-                             tone, tone);
+    walls[7] = new PFixedBox(-gpos_x, 0.0, gpos_z, gthick, gsiz_y, gsiz_z);
 
-    walls[8] = new PFixedBox(-gpos2_x, -gpos_y, gpos_z, gsiz_x, gthick, gsiz_z,
-                             tone, tone, tone);
+    walls[8] = new PFixedBox(-gpos2_x, -gpos_y, gpos_z, gsiz_x, gthick, gsiz_z);
 
-    walls[9] = new PFixedBox(-gpos2_x, gpos_y, gpos_z, gsiz_x, gthick, gsiz_z,
-                             tone, tone, tone);
+    walls[9] = new PFixedBox(-gpos2_x, gpos_y, gpos_z, gsiz_x, gthick, gsiz_z);
 
     p->addObject(ground);
     p->addObject(ball);
     p->addObject(ray);
     for (auto& wall : walls) p->addObject(wall);
-    const int wheeltexid =
-        4 * getConf().game.robot_count + 12 + 1;  // 37 for 6 robots
 
     // TODO : Pass settings to robot instead of read inside
     // cfg->robotSettings = cfg->blueSettings;
     for (int k = 0; k < getConf().game.robot_count; k++) {
-        float a1 = -form1->x[k];
-        float a2 = form1->y[k];
-        float a3 = ROBOT_START_Z();
-        robots[k] =
-            new Robot(p, ball, -form1->x[k], form1->y[k], ROBOT_START_Z(),
-                      ROBOT_GRAY, ROBOT_GRAY, ROBOT_GRAY, k + 1, wheeltexid, 1);
+        robots[k] = new Robot(p, ball, -form1->x[k], form1->y[k],
+                              ROBOT_START_Z(), k + 1, 1);
     }
     // cfg->robotSettings = cfg->yellowSettings;
     for (int k = 0; k < getConf().game.robot_count; k++)
         robots[k + getConf().game.robot_count] = new Robot(
-            p, ball, form2->x[k], form2->y[k], ROBOT_START_Z(), ROBOT_GRAY,
-            ROBOT_GRAY, ROBOT_GRAY, k + getConf().game.robot_count + 1,
-            wheeltexid, -1);  // XXX
+            p, ball, form2->x[k], form2->y[k], ROBOT_START_Z(),
+            k + getConf().game.robot_count + 1, -1);  // XXX
 
     p->initAllObjects();
 
@@ -316,7 +293,7 @@ void World::step(dReal dt) {
 
     int best_k = -1;
     dReal best_dist = 1e8;
-    dReal xyz[3], hpr[3];
+    dReal xyz[3];
     if (selected == -2) {
         best_k = -2;
         dReal bx, by, bz;
@@ -338,24 +315,19 @@ void World::step(dReal dt) {
                 best_k = k;
             }
         }
-        robots[k]->chassis->setColor(ROBOT_GRAY, ROBOT_GRAY, ROBOT_GRAY);
     }
-    if (best_k >= 0)
-        robots[best_k]->chassis->setColor(ROBOT_GRAY * 2, ROBOT_GRAY * 1.5,
-                                          ROBOT_GRAY * 1.5);
+
     selected = best_k;
     ball->tag = -1;
     for (int k = 0; k < getConf().game.robot_count * 2; k++) {
         robots[k]->step();
         robots[k]->selected = false;
     }
-    dMatrix3 R;
-
     sendVisionBuffer();
     framenum++;
 }
 
-void World::addRobotStatus(Robots_Status& robotsPacket, int robotID, int team,
+void World::addRobotStatus(Robots_Status& robotsPacket, int robotID,
                            bool infrared, KickStatus kickStatus) {
     Robot_Status* robot_status = robotsPacket.add_robots_status();
     robot_status->set_robot_id(robotID);
@@ -523,7 +495,7 @@ void World::recvActions() {
                     kicking != lastKickState[team][i] ||
                     lastStatusSendCount[team][i] > 10) {
                     updateRobotStatus = true;
-                    addRobotStatus(robotsPacket, i, team, isInfrared, kicking);
+                    addRobotStatus(robotsPacket, i, isInfrared, kicking);
                     lastInfraredState[team][i] = isInfrared;
                     lastKickState[team][i] = kicking;
                     lastStatusSendCount[team][i] = 0;
@@ -668,7 +640,6 @@ void World::addFieldLinesArcs(SSL_GeometryFieldSize* field) {
     const double kFieldWidth = CONVUNIT(getConf().field.width);
     const double kGoalWidth = CONVUNIT(getConf().field.goal_width);
     const double kGoalDepth = CONVUNIT(getConf().field.goal_depth);
-    const double kBoundaryWidth = CONVUNIT(getConf().field.referee_margin);
     const double kCenterRadius = CONVUNIT(getConf().field.radius);
     const double kLineThickness = CONVUNIT(getConf().field.line_width);
     const double kPenaltyDepth = CONVUNIT(getConf().field.penalty_depth);
@@ -678,8 +649,6 @@ void World::addFieldLinesArcs(SSL_GeometryFieldSize* field) {
     const double kXMin = -kXMax;
     const double kYMax = (kFieldWidth - kLineThickness) / 2;
     const double kYMin = -kYMax;
-    const double penAreaX = kXMax - kPenaltyDepth;
-    const double penAreaY = kPenaltyWidth / 2.0;
 
     // Field lines
     addFieldLine(field, "TopTouchLine", kXMin - kLineThickness / 2, kYMax,
@@ -734,13 +703,6 @@ void World::addFieldLinesArcs(SSL_GeometryFieldSize* field) {
     // Field arcs
     addFieldArc(field, "CenterCircle", 0, 0, kCenterRadius - kLineThickness / 2,
                 0, 2 * M_PI, kLineThickness);
-}
-
-Vector2f* World::allocVector(float x, float y) {
-    Vector2f* vec = new Vector2f();
-    vec->set_x(x);
-    vec->set_y(y);
-    return vec;
 }
 
 void World::addFieldLine(SSL_GeometryFieldSize* field, const std::string& name,

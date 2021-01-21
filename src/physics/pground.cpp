@@ -18,25 +18,9 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 
 #include "physics/pground.h"
 
-PGround::PGround(dReal field_radius,dReal field_length,dReal field_width,dReal field_penalty_rad,dReal field_penalty_line_length,dReal field_penalty_point, dReal field_line_width,int tex_id)
-        : PObject(0,0,0,0,1,0,0)
-{
-    rad = field_radius;
-    len = field_length;
-    wid = field_width;
-    pdep = field_penalty_rad;
-    pwid = field_penalty_line_length;
-    ppoint = field_penalty_point;
-    tex = tex_id;
-    lwidth = field_line_width;
+PGround::PGround()
+    : PObject(0, 0, 0, 0) {}
 
-}
+void PGround::init() { geom = dCreatePlane(space, 0, 0, 1, 0); }
 
-void PGround::init()
-{
-    geom = dCreatePlane (space,0,0,1,0);
-}
-
-PGround::~PGround()
-{
-}
+PGround::~PGround() {}

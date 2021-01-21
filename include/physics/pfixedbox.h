@@ -20,12 +20,12 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 
 #include "pobject.h"
 
-class PFixedBox : public PObject
-{
-private:
-    dReal m_w,m_h,m_l;
-public:
-    PFixedBox(dReal x,dReal y,dReal z,dReal w,dReal h,dReal l,dReal r,dReal g,dReal b);
+class PFixedBox : public PObject {
+   private:
+    dReal m_w, m_h, m_l;
+
+   public:
+    PFixedBox(dReal x, dReal y, dReal z, dReal w, dReal h, dReal l);
     virtual ~PFixedBox();
     virtual void init();
 };

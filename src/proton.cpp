@@ -9,9 +9,6 @@ Proton::Proton(boost::asio::io_context& io)
       yellow_status_server(getConf().com.yellow_status_port, io) {
     auto r = new RobotsFomation(1);
     world = new World(r, r);
-    // unsigned int port_command = 20011;
-    //     std::string address_grsim = "224.5.23.2";
-    //     std::string listen_address = "0.0.0.0";
 
     UDPClient client("0.0.0.0", getConf().com.vision_multicast_adress,
                      getConf().com.command_listen_port, io);
@@ -29,8 +26,7 @@ void Proton::tick() {
         start_time = std::chrono::steady_clock::now();
     } else {
         auto current_time = std::chrono::steady_clock::now();
-        std::chrono::duration<double> delta_time =
-            std::chrono::steady_clock::now() - start_time;
+        std::chrono::duration<double> delta_time = current_time - start_time;
         start_time = current_time;
         world->step(delta_time.count());
     }

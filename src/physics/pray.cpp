@@ -18,18 +18,10 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 
 #include "physics/pray.h"
 
-PRay::PRay(dReal length)
-         : PObject(0,0,0,0,0,0,0)
-{
-    _length = length;
-}
+PRay::PRay(dReal length) : PObject(0, 0, 0, 0), _length(length) {}
 
-void PRay::init()
-{
-    geom = dCreateRay(space,_length);
-}
+void PRay::init() { geom = dCreateRay(space, _length); }
 
-void PRay::setPose(dReal x,dReal y,dReal z,dReal dx,dReal dy,dReal dz)
-{
-    dGeomRaySet(geom,x,y,z,dx,dy,dz);
+void PRay::setPose(dReal x, dReal y, dReal z, dReal dx, dReal dy, dReal dz) {
+    dGeomRaySet(geom, x, y, z, dx, dy, dz);
 }

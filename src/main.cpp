@@ -18,29 +18,6 @@ void signalHandler(int signum) {
     exit(0);
 }
 
-// void test_server(boost::asio::io_context& io_context) {
-//     unsigned int port_vision = 10020;
-//     std::string address_grsim = "224.5.23.2";
-
-//     UDPServer server(address_grsim, port_vision, io_context);
-//     while (running) {
-//         server.send();
-//         usleep(60);
-//     };
-// }
-
-// void test_client(boost::asio::io_context& io_context) {
-//     unsigned int port_command = 20011;
-//     std::string address_grsim = "224.5.23.2";
-//     std::string listen_address = "0.0.0.0";
-
-//     UDPClient client(listen_address, address_grsim, port_command,
-//     io_context); while (running) {
-//         std::cout << "test" << std::endl;
-//         usleep(60);
-//     };
-// }
-
 void update(const boost::system::error_code& /*e*/,
             boost::asio::steady_timer* t, Proton* proton) {
     if (running) {

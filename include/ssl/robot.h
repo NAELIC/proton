@@ -54,7 +54,7 @@ class Robot {
     class Wheel {
        public:
         int id;
-        Wheel(Robot* robot, int _id, dReal ang, dReal ang2, int wheeltexid);
+        Wheel(Robot* robot, int _id, dReal ang, dReal ang2);
         void step();
         dJointID joint;
         dJointID motor;
@@ -87,14 +87,13 @@ class Robot {
         Robot* rob;
     } * kicker;
 
-    Robot(PWorld* world, PBall* ball, dReal x, dReal y, dReal z, dReal r,
-          dReal g, dReal b, int rob_id, int wheeltexid, int dir);
+    Robot(PWorld* world, PBall* ball, dReal x, dReal y, dReal z, int rob_id,
+          int dir);
     ~Robot();
     void step();
     void setSpeed(int i, dReal s);  // i = 0,1,2,3
     void setSpeed(dReal vx, dReal vy, dReal vw);
     dReal getSpeed(int i);
-    void incSpeed(int i, dReal v);
     void resetSpeeds();
     void resetRobot();
     void getXY(dReal& x, dReal& y);
@@ -107,7 +106,7 @@ class Robot {
     PWorld* getWorld();
 };
 
-// TODO : ROBOT_START_Z
+// TODO : ROBOT_START_Z - Set settings
 #define ROBOT_START_Z()                           \
     (getConf().robot_setting.height * 0.5 +       \
      getConf().robot_setting.wheel_radius * 1.1 + \

@@ -749,7 +749,6 @@ void World::sendVisionBuffer() {
         SSL_WrapperPacket* packet = sendQueue.front()->packet;
         delete sendQueue.front();
         sendQueue.pop();
-        // std:: cout << packet->DebugString() << std::endl;
         visionServer->send(packet);
         delete packet;
         if (sendQueue.empty()) break;

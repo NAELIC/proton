@@ -37,9 +37,10 @@ PWorld::PWorld(dReal dt, dReal gravity, int _robot_count) {
     // dInitODE2(0);
     dInitODE();
     world = dWorldCreate();
+    dWorldSetGravity(world, 0, 0, -gravity);
+    
     space = dHashSpaceCreate(0);
     contactgroup = dJointGroupCreate(0);
-    dWorldSetGravity(world, 0, 0, -gravity);
     objects_count = 0;
     sur_matrix = NULL;
     // dAllocateODEDataForThread(dAllocateMaskAll);
@@ -51,10 +52,6 @@ PWorld::~PWorld() {
     dSpaceDestroy(space);
     dWorldDestroy(world);
     dCloseODE();
-}
-
-void PWorld::setGravity(dReal gravity) {
-    dWorldSetGravity(world, 0, 0, -gravity);
 }
 
 void PWorld::handleCollisions(dGeomID o1, dGeomID o2) {
@@ -151,6 +148,6 @@ void PWorld::step(dReal dt) {
         dWorldStep(world, (dt < 0) ? delta_time : dt);
         dJointGroupEmpty(contactgroup);
     } catch (...) {
-        // qDebug() << "Some Error Happened;";
+        std::cerr << "Some error Happened" << std::endl;
     }
 }

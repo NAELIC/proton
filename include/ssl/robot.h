@@ -48,7 +48,6 @@ class Robot {
     PBox* boxes[3];
     bool on;
     // these values are not controled by this class
-    bool selected;
     dReal select_x, select_y, select_z;
 
     class Wheel {

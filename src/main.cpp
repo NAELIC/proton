@@ -10,6 +10,8 @@
 #include "net/udp_server.h"
 #include "proton.h"
 
+using namespace boost::placeholders;
+
 boost::asio::io_context io;
 bool running = true;
 

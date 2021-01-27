@@ -6,16 +6,6 @@ set(VERSION "0.0.1a1")
 set(MAINTAINER "Etienne SCHMITZ <hello@etienne-schmitz.com>")
 set(CMAKE_CXX_STANDARD 17)
 
-if(CMAKE_SOURCE_DIR STREQUAL namec_core_SOURCE_DIR)
-    include(GNUInstallDirs)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
-
-    include(cmake/build_configuration.cmake)
-    setDefaultBuildType("Debug")
-endif()
-
 include_directories(${CMAKE_CURRENT_SOURCE_DIR/}include)
 
 # add_compile_options(-Wall -Wextra -pedantic -Werror)
@@ -66,7 +56,6 @@ SET(
     src/physics/pfixedbox.cpp
     src/physics/pcylinder.cpp
     src/physics/pbox.cpp
-    src/physics/pray.cpp
 
     # network
     src/net/udp_client.cpp
@@ -95,7 +84,6 @@ SET(
     include/physics/pfixedbox.h
     include/physics/pcylinder.h
     include/physics/pbox.h
-    include/physics/pray.h
 
     # network
     include/net/udp_client.h

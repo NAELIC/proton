@@ -2,7 +2,7 @@
 
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <iostream>
 #include <queue>
 #include <string>

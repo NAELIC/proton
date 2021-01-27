@@ -57,10 +57,10 @@ struct Noise {
 };
 
 struct Game {
-    int robot_count{8};
+    int robot_count{6};
     int desired_fps{60};
     float delta_time{0.016};
-    float gravity = {9.8};
+    float gravity = {9.81};
     bool reset_turn_over{true};  // TODO : What is it ?
 };
 

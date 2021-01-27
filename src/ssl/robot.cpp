@@ -251,13 +251,6 @@ PWorld* Robot::getWorld() { return w; }
 
 int Robot::getID() { return m_rob_id - 1; }
 
-void normalizeVector(dReal& x, dReal& y, dReal& z) {
-    dReal d = sqrt(x * x + y * y + z * z);
-    x /= d;
-    y /= d;
-    z /= d;
-}
-
 void Robot::step() {
     if (on) {
         if (firsttime) {
@@ -271,8 +264,7 @@ void Robot::step() {
         kicker->step();
     } else {
         if (last_state) {
-            wheels[0]->speed = wheels[1]->speed = wheels[2]->speed =
-                wheels[3]->speed = 0;
+            this->resetSpeeds();
             kicker->setRoller(0);
             wheels[0]->step();
             wheels[1]->step();

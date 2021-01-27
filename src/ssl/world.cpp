@@ -18,9 +18,6 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 
 #include "ssl/world.h"
 
-// #include "logger.h"
-
-#define ROBOT_GRAY 0.4
 #define WHEEL_COUNT 4
 
 World* _w;
@@ -67,32 +64,6 @@ bool wheelCallBack(dGeomID o1, dGeomID o2, PSurface* s, int /*robots_count*/) {
     return true;
 }
 
-bool rayCallback(dGeomID o1, dGeomID o2, PSurface* s, int robots_count) {
-    dGeomID obj;
-    if (o1 == _w->ray->geom)
-        obj = o2;
-    else
-        obj = o1;
-    for (int i = 0; i < robots_count * 2; i++) {
-        if (_w->robots[i]->chassis->geom == obj ||
-            _w->robots[i]->dummy->geom == obj) {
-            _w->robots[i]->selected = true;
-            _w->robots[i]->select_x = s->contactPos[0];
-            _w->robots[i]->select_y = s->contactPos[1];
-            _w->robots[i]->select_z = s->contactPos[2];
-        }
-    }
-    if (_w->ball->geom == obj) {
-        _w->selected = -2;
-    }
-    if (obj == _w->ground->geom) {
-        _w->cursor_x = s->contactPos[0];
-        _w->cursor_y = s->contactPos[1];
-        _w->cursor_z = s->contactPos[2];
-    }
-    return false;
-}
-
 bool ballCallBack(dGeomID o1, dGeomID o2, PSurface* s, int /*robots_count*/) {
     if (_w->ball->tag != -1)  // spinner adjusting
     {
@@ -112,7 +83,6 @@ bool ballCallBack(dGeomID o1, dGeomID o2, PSurface* s, int /*robots_count*/) {
 }
 
 World::World(RobotsFomation* form1, RobotsFomation* form2) {
-    customDT = -1;
     _w = this;
     framenum = 0;
     last_dt = -1;
@@ -120,7 +90,6 @@ World::World(RobotsFomation* form1, RobotsFomation* form2) {
     p = new PWorld(0.05, 9.81, getConf().game.robot_count);
     ball = new PBall(0, 0, 0.5, getConf().ball.radius, getConf().ball.mass),
     ground = new PGround();
-    ray = new PRay(50);
 
     const double thick = getConf().field.wall_thickness;
     const double increment =
@@ -166,7 +135,6 @@ World::World(RobotsFomation* form1, RobotsFomation* form2) {
 
     p->addObject(ground);
     p->addObject(ball);
-    p->addObject(ray);
     for (auto& wall : walls) p->addObject(wall);
 
     // TODO : Pass settings to robot instead of read inside
@@ -177,20 +145,13 @@ World::World(RobotsFomation* form1, RobotsFomation* form2) {
     }
     // cfg->robotSettings = cfg->yellowSettings;
     for (int k = 0; k < getConf().game.robot_count; k++)
-        robots[k + getConf().game.robot_count] = new Robot(
-            p, ball, form2->x[k], form2->y[k], ROBOT_START_Z(),
-            k + getConf().game.robot_count + 1, -1);  // XXX
+        robots[k + getConf().game.robot_count] =
+            new Robot(p, ball, form2->x[k], form2->y[k], ROBOT_START_Z(),
+                      k + getConf().game.robot_count + 1, -1);  // XXX
 
     p->initAllObjects();
 
     // Surfaces
-
-    p->createSurface(ray, ground)->callback = rayCallback;
-    p->createSurface(ray, ball)->callback = rayCallback;
-    for (int k = 0; k < getConf().game.robot_count * 2; k++) {
-        p->createSurface(ray, robots[k]->chassis)->callback = rayCallback;
-        p->createSurface(ray, robots[k]->dummy)->callback = rayCallback;
-    }
     PSurface ballwithwall;
     ballwithwall.surface.mode =
         dContactBounce | dContactApprox1;  // | dContactSlip1;
@@ -238,7 +199,6 @@ World::World(RobotsFomation* form1, RobotsFomation* form2) {
         }
     }
     sendGeomCount = 0;
-    in_buffer = new char[65536];
 
     // initialize robot state
     for (int team = 0; team < 2; ++team) {
@@ -259,16 +219,16 @@ World::~World() { delete p; }
 void World::step(dReal dt) {
     frame_time = std::chrono::steady_clock::now();
 
-    if (customDT > 0) dt = customDT;
-
     int ballCollisionTry = 5;
     for (int kk = 0; kk < ballCollisionTry; kk++) {
         const dReal* ballvel = dBodyGetLinearVel(ball->body);
         dReal ballspeed = ballvel[0] * ballvel[0] + ballvel[1] * ballvel[1] +
                           ballvel[2] * ballvel[2];
         ballspeed = sqrt(ballspeed);
+
         dReal ballfx = 0, ballfy = 0, ballfz = 0;
         dReal balltx = 0, ballty = 0, balltz = 0;
+
         if (ballspeed > 0.01) {
             dReal fk = getConf().ball.friction * getConf().ball.mass *
                        getConf().game.gravity;
@@ -286,42 +246,12 @@ void World::step(dReal dt) {
         else
             last_dt = dt;
 
-        selected = -1;
         p->step(dt / ballCollisionTry);
         recvActions();
     }
-
-    int best_k = -1;
-    dReal best_dist = 1e8;
-    dReal xyz[3];
-    if (selected == -2) {
-        best_k = -2;
-        dReal bx, by, bz;
-        ball->getBodyPosition(bx, by, bz);
-        best_dist = (bx - xyz[0]) * (bx - xyz[0]) +
-                    (by - xyz[1]) * (by - xyz[1]) +
-                    (bz - xyz[2]) * (bz - xyz[2]);
-    }
-    for (int k = 0; k < getConf().game.robot_count * 2; k++) {
-        if (robots[k]->selected) {
-            dReal dist =
-                (robots[k]->select_x - xyz[0]) *
-                    (robots[k]->select_x - xyz[0]) +
-                (robots[k]->select_y - xyz[1]) *
-                    (robots[k]->select_y - xyz[1]) +
-                (robots[k]->select_z - xyz[2]) * (robots[k]->select_z - xyz[2]);
-            if (dist < best_dist) {
-                best_dist = dist;
-                best_k = k;
-            }
-        }
-    }
-
-    selected = best_k;
     ball->tag = -1;
     for (int k = 0; k < getConf().game.robot_count * 2; k++) {
         robots[k]->step();
-        robots[k]->selected = false;
     }
     sendVisionBuffer();
     framenum++;
@@ -763,17 +693,16 @@ void RobotsFomation::setAll(dReal* xx, dReal* yy) {
 }
 
 RobotsFomation::RobotsFomation(int type) {
-    if (type == 0) {
-        dReal teamPosX[MAX_ROBOT] = {2.20, 1.00, 1.00, 1.00, 0.33, 1.22,
-                                     3.00, 3.20, 3.40, 3.60, 3.80, 4.00,
+    if (type == FORMATION_OUTSIDE) {
+        double yv = -(getConf().field.width / 2 + getConf().field.margin / 2);
+        dReal teamPosX[MAX_ROBOT] = {0.40, 0.80, 1.20, 1.60, 2.00, 2.40,
+                                     2.80, 3.20, 3.60, 4.00, 4.40, 4.80,
                                      0.40, 0.80, 1.20, 1.60};
-        dReal teamPosY[MAX_ROBOT] = {0.00,  -0.75, 0.00,  0.75, 0.25, 0.00,
-                                     1.00,  1.00,  1.00,  1.00, 1.00, 1.00,
-                                     -3.50, -3.50, -3.50, -3.50};
+        dReal teamPosY[MAX_ROBOT] = {yv, yv, yv, yv, yv, yv, yv, yv,
+                                     yv, yv, yv, yv, yv, yv, yv, yv};
         setAll(teamPosX, teamPosY);
     }
-    if (type == 1)  // formation 1
-    {
+    if (type == FORMATION_INSIDE_1) {
         dReal teamPosX[MAX_ROBOT] = {1.50, 1.50, 1.50, 0.55, 2.50, 3.60,
                                      3.20, 3.20, 3.20, 3.20, 3.20, 3.20,
                                      0.40, 0.80, 1.20, 1.60};
@@ -782,8 +711,7 @@ RobotsFomation::RobotsFomation(int type) {
                                      -3.50, -3.50, -3.50, -3.50};
         setAll(teamPosX, teamPosY);
     }
-    if (type == 2)  // formation 2
-    {
+    if (type == FORMATION_INSIDE_2) {
         dReal teamPosX[MAX_ROBOT] = {4.20, 3.40, 3.40, 0.70, 0.70, 0.70,
                                      2.00, 2.00, 2.00, 2.00, 2.00, 2.00,
                                      0.40, 0.80, 1.20, 1.60};
@@ -792,33 +720,15 @@ RobotsFomation::RobotsFomation(int type) {
                                      -3.50, -3.50, -3.50, -3.50};
         setAll(teamPosX, teamPosY);
     }
-    if (type == 3)  // outside field
-    {
+    if (type == FORMATION_OUTSIDE_FIELD) {
+        double yv = -(getConf().field.width / 2 + getConf().field.margin + getConf().field.referee_margin
+        + 0.5);
+        
         dReal teamPosX[MAX_ROBOT] = {0.40, 0.80, 1.20, 1.60, 2.00, 2.40,
                                      2.80, 3.20, 3.60, 4.00, 4.40, 4.80,
                                      0.40, 0.80, 1.20, 1.60};
-        dReal teamPosY[MAX_ROBOT] = {-4.00, -4.00, -4.00, -4.00, -4.00, -4.00,
-                                     -4.00, -4.00, -4.00, -4.00, -4.00, -4.00,
-                                     -4.40, -4.40, -4.40, -4.40};
-        setAll(teamPosX, teamPosY);
-    }
-    if (type == 4) {
-        dReal teamPosX[MAX_ROBOT] = {2.80, 2.50, 2.50, 0.80, 0.80, 1.10,
-                                     3.00, 3.20, 3.40, 3.60, 3.80, 4.00,
-                                     0.40, 0.80, 1.20, 1.60};
-        dReal teamPosY[MAX_ROBOT] = {5.00,  4.70,  5.30,  5.00, 6.50, 5.50,
-                                     1.00,  1.00,  1.00,  1.00, 1.00, 1.00,
-                                     -3.50, -3.50, -3.50, -3.50};
-        setAll(teamPosX, teamPosY);
-    }
-    if (type == -1)  // outside
-    {
-        dReal teamPosX[MAX_ROBOT] = {0.40, 0.80, 1.20, 1.60, 2.00, 2.40,
-                                     2.80, 3.20, 3.60, 4.00, 4.40, 4.80,
-                                     0.40, 0.80, 1.20, 1.60};
-        dReal teamPosY[MAX_ROBOT] = {-3.40, -3.40, -3.40, -3.40, -3.40, -3.40,
-                                     -3.40, -3.40, -3.40, -3.40, -3.40, -3.40,
-                                     -3.20, -3.20, -3.20, -3.20};
+        dReal teamPosY[MAX_ROBOT] = {yv, yv, yv, yv, yv, yv, yv, yv,
+                                     yv, yv, yv, yv, yv, yv, yv, yv};
         setAll(teamPosX, teamPosY);
     }
 }

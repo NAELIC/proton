@@ -36,9 +36,13 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 #include "physics/pball.h"
 #include "physics/pfixedbox.h"
 #include "physics/pground.h"
-#include "physics/pray.h"
 #include "physics/pworld.h"
 #include "robot.h"
+
+#define FORMATION_OUTSIDE 0
+#define FORMATION_INSIDE_1 1
+#define FORMATION_INSIDE_2 2
+#define FORMATION_OUTSIDE_FIELD 3
 
 class RobotsFomation;
 class SendingPacket {
@@ -53,8 +57,6 @@ class World {
     int framenum;
     dReal last_dt;
     std::queue<SendingPacket*> sendQueue;
-    char packet[200];
-    char* in_buffer;
     bool lastInfraredState[NB_TEAM][MAX_ROBOT];
     KickStatus lastKickState[NB_TEAM][MAX_ROBOT];
     int lastStatusSendCount[NB_TEAM][MAX_ROBOT];
@@ -63,7 +65,6 @@ class World {
         frame_time;
 
    public:
-    dReal customDT;
     World(RobotsFomation* form1, RobotsFomation* form2);
     virtual ~World();
     void step(dReal dt = -1);
@@ -85,18 +86,13 @@ class World {
     PWorld* p;
     PBall* ball;
     PGround* ground;
-    PRay* ray;
     PFixedBox* walls[MAX_NB_WALL];
-    int selected;
-    dReal cursor_x, cursor_y, cursor_z;
     UDPServer *visionServer, *blueStatusSocket, *yellowStatusSocket;
     UDPClient* commandSocket;
     Robot* robots[MAX_ROBOT * 2];
     int sendGeomCount;
 
     void recvActions();
-    //    signals:
-    //     void fpsChanged(int newFPS);
 };
 
 class RobotsFomation {
@@ -108,4 +104,3 @@ class RobotsFomation {
 };
 
 dReal fric(dReal f);
-int robotIndex(int robot, int team);

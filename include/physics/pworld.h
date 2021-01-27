@@ -20,6 +20,7 @@ Copyright (C) 2011, Parsian Robotic Center (eew.aut.ac.ir/~parsian/grsim)
 
 #include "pobject.h"
 #include <vector>
+#include <iostream>
 
 class PSurface;
 class PWorld
@@ -34,7 +35,6 @@ private:
 public:
     PWorld(dReal dt,dReal gravity, int robot_count);
     ~PWorld();
-    void setGravity(dReal gravity);
     void addObject(PObject* o);
     void initAllObjects();
     PSurface* createSurface(PObject* o1,PObject* o2);

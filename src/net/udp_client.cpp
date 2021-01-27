@@ -1,6 +1,7 @@
 #include "net/udp_client.h"
 
 using namespace boost;
+using namespace boost::placeholders;
 
 UDPClient::UDPClient(std::string listen_addr, std::string multicast_addr,
                      unsigned int port, asio::io_context& io_context)
